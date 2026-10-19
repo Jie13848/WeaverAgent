@@ -1,0 +1,86 @@
+# Attention is all you need to solve chiral superconductivity
+
+```meta
+corpus_id: 250903683
+arxiv: 2509.03683v1
+```
+
+## Authors
+
+- Chun-Tse Li
+- Tzen Ong
+- Max Geier
+- Hsin Lin
+- Liang Fu
+
+## Abstract
+
+Recent advances on neural quantum states have shown that correlations between quantum particles can be efficiently captured by attention a foundation of modern neural architectures that enables neural networks to learn the relation between objects. In this work, we show that a general-purpose self-attention Fermi neural network is able to find chiral $p_{x}\pm ip_{y}$ superconductivity in an attractive Fermi gas by energy minimization, without prior knowledge or bias towards pairing. The superconducting state is identified from the optimized wavefunction by measuring various physical observables: the pair binding energy, the total angular momentum of the ground state, and off-diagonal long-range order in the two-body reduced density matrix. Our work paves the way for Al-driven discovery of unconventional and topological superconductivity in strongly correlated quantum materials.
+
+## Introduction
+
+Solving the ground state of quantum many-body systems is a central problem in condensed matter physics, as it underlies our understanding of quantum materials and their rich phase diagrams [1-7]. However, the exponential growth of the Hilbert space dimension with particle number makes exact solution generally impossible. The challenge is amplified in strongly correlated systems, where perturbative expansion fails to capture the right physics. Recent advances in machine learning have opened a new path to solve quantum many-body problems variationally by using deep neural networks [8-11] to universally approximate continuous functions [12-14], including ground state wavefunctions of bosons and fermions. Neural network wavefunctions containing a large number of parameters can be efficiently optimized by energy minimization in a variational Monte Carlo (VMC) framework. This approach has proven to be successful in a number of fermion systems, especially for continuous space Hamiltonians [15-18].
+Despite rapid progress, existing research on neural network variational Monte Carlo has largely employed problem-specific neural quantum states (NQS). As an example, for spin-1/2 Fermi gas with repulsive interaction, a determinant based neural network wavefunction is used to study the Fermi liquid ground state, whereas for the attractive case a paired wavefunction is introduced to study superconductivity [19-21]. It is therefore unclear whether there exists a universal neural network architecture applicable across a wide range of quantum systems. Only recently has a unifying neural network architecture based on the self-attention mechanism been proposed, tested on a variety of many-body systems, and shown to succeed without pre-training or prior knowledge [22, 23].
+In this work, we leverage the self-attention neural network (NN) to solve the problem of spin-polarized (or spinless) two-dimensional Fermi gas with attractive interaction, and find a superconducting ground state with chiral $p_x \pm ip_y$ pairing, which spontaneously breaks time-reversal symmetry (TRS). We show that this chiral superconductor is topologically nontrivial over a wide range of interaction strengths, as evidenced by a peculiar "odd-even" effect distinct from conventional superconductors. Starting from first principles, our NN method faithfully captures the effect of quantum fluctuations beyond the BCS mean-field theory [24] and accurately solves the ground state of a strong-coupling chiral superconductor. Remarkably, all our results are obtained from a general-purpose neural network that utilizes the self-attention mechanism [25] to tackle electron correlation effect [22]. Importantly, unlike previous works [19, 26], our approach does not require modifications to the self-attention wave function architecture instead we demonstrate that attention is all you need to solve chiral and topological superconductivity without any prior knowledge.
+
+## Model
+
+We consider spin-polarized fermions with attractive interaction in two dimensions. The Hamiltonian in the natural unit $(\hbar=1)$ reads as follows:
+$H=-\sum_{i=1}^{N}\frac{\nabla_{i}^{2}}{2m_{e}}+\sum_{i>j}V(r_{i}-r_{j})$
+with an attractive Gaussian interaction:
+$V(r)=\frac{U}{2\pi\sigma_{U}^{2}}exp(-\frac{|r|^{2}}{2\sigma_{U}^{2}})$
+where $U<0$ set the coupling strength between fermions and the parameter $\sigma_{U}$ set the interparticle interaction range.
+
+## Neural Network Variational Monte Carlo
+
+Our wavefunction ansatz is constructed by enforcing only the most fundamental physical requirement of fermionic many-particle wavefunctions: the Pauli principle. This antisymmetric structure under particle exchange is captured by a sum of determinants built from many-body orbitals [9]
+$\Psi(X)=\frac{1}{\sqrt{N!}}\sum_{k=1}^{Naet}det[\Phi_{\mu}^{k}(x_{j};\{x_{/j}\})]_{j,\mu=1}^{N}$
+where $\Phi_{\mu}(x_{j};\{x_{/j}\})$ depend on all particle coordinates and are permutation invariant under particle coordinates $\{x_{/j}\}:=\{x_{1},...,x_{N}\}\backslash x_{j}$ except $x_{j}$.
+
+## Neural network ansatz
+
+We consider the system within a supercell specified by the vectors $L_{j}$ with periodic boundary condition. A transformer neural network [25] is employed to generate the many-body orbitals $\Phi_{\mu}(x_{j};\{x_{/j}\})$. Our architecture is identical to Ref. [22] and follows the spirit of Ref. [11]. Each particle input is then mapped to a corresponding vector in a high-dimensional vector space $h_{j}^{(0)}\in\mathbb{R}^{d_{int}}$ through a linear transformation. These "particle tokens" $h_{j}^{(0)}$ are processed by L layers of multi-head self-attention layer followed by multi-layer perceptron (MLP) layers. The self-attention mechanism passes information between particle tokens $h_{j}^{(l)}$, thus introducing electron correlations while preserving the permutation equivariance.
+
+## Pair-binding energy
+
+The presence of electron pairing is diagnosed by the pair binding energy, $E_{B}(N)=E(N)+E(N+2)-2~E(N+1),$ where $E(N)$ is the ground-state energy of the N-particle sector. A hallmark of topological superconductivity in a spinless Fermi gas is a reversed even-odd effect [24, 44]. For all attraction strengths studied here, the pairing energy is finite and $|E_{B}|$ grows rapidly with U.
+
+## Ground-state angular momentum of $p_x \pm ip_y$ superconductors
+
+Unlike s-wave superconductors, a $p_{x}\pm ip_{y}$ superconductor hosts Cooper pairs that each carry orbital angular momentum $\pm1$. In the topologically nontrivial ground state of attractive Fermi gas, all but one electron at $k=0$ pair up, resulting in a total angular momentum $M=\pm(N-1)/2$.
+
+## Ground-state momentum distribution
+
+The presence of pairing is also evidenced by the momentum distribution function $n(k)=\langle\hat{c}_{k}^{\dagger}\hat{c}_{k}\rangle$. In the superconducting ground state, the momentum distribution is broadened: instead of a sharp discontinuity, $n(k)$ changes smoothly across the Fermi surface due to electron pairing.
+
+## Off-diagonal long-range order
+
+To demonstrate the existence of superconductivity directly, we calculate the two-body reduced density matrix (2-RDM) of the many-body wavefunction. The defining feature of superconductivity due to electron pairing is that the 2-RDM $\rho^{(2)}(x_{1},x_{2};x_{1}^{\prime},x_{2}^{\prime})$ has a large eigenvalue $\lambda_{0}$ that is proportional to the particle number N. The leading eigenvector $\Phi_{0}(k)$ exhibits a $2\pi$ phase winding around the origin, consistent with chiral $p_{x}+ip_{y}$ symmetry.
+
+## Conclusion
+
+We have demonstrated that a self-attention NQS can faithfully represent the ground state of an interacting, time-reversal-breaking chiral $p_{x}+ip_{y}$ superconductor in a spin-polarized two-dimensional Fermi gas. Crucially, the variational ansatz enforces only fermionic antisymmetry, without imposing any Pfaffian, geminal, or other problem-specific pairing structure. Our results show how transformer-based NQS can discover superconductivity from first principles.
+
+## References
+
+1. [8] G. Carleo and M. Troyer, Solving the quantum many-body problem with artificial neural networks, Science 355, 602 (2017).
+
+2. [9] D. Pfau, J. S. Spencer, A. G. Matthews, and W. M. C. Foulkes, Ab initio solution of the many-electron schrödinger equation with deep neural networks, Physical review research 2, 033429 (2020).
+
+3. [11] I. von Glehn, J. S. Spencer, and D. Pfau, A self-attention ansatz for ab-initio quantum chemistry, arXiv preprint arXiv:2211.13672 (2022).
+
+4. [22] M. Geier, K. Nazaryan, T. Zaklama, and L. Fu, Self-attention neural network for solving correlated electron problems in solids, Phys. Rev. B 112, 045119 (2025).
+
+5. [23] Y. Teng, D. D. Dai, and L. Fu, Solving the fractional quantum hall problem with self-attention neural network, Physical Review B 111, 205117 (2025).
+
+6. [24] N. Read and D. Green, Paired states of fermions in two dimensions with breaking of parity and time-reversal symmetries and the fractional quantum hall effect, Physical Review B 61, 10267 (2000).
+
+7. [25] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez, L. Kaiser, and I. Polosukhin, Attention is all you need, Advances in neural information processing systems 30 (2017).
+
+8. [62] S. Sorella, Green function monte carlo with stochastic reconfiguration, Physical review letters 80, 4558 (1998).
+
+9. [63] S.-I. Amari, Natural gradient works efficiently in learning, Neural computation 10, 251 (1998).
+
+10. [64] J. Stokes, J. Izaac, N. Killoran, and G. Carleo, Quantum natural gradient, Quantum 4, 269 (2020).
+
+11. [65] J. Martens and R. Grosse, Optimizing neural networks with kronecker-factored approximate curvature, in International conference on machine learning (PMLR, 2015) pp. 2408-2417).

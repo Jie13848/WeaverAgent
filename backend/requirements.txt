@@ -1,0 +1,54 @@
+# ===========================================
+# WeaverAgent Backend Dependencies
+# ===========================================
+# Python 3.11+ required
+# Install: pip install -r requirements.txt
+#
+# GraphRAG 版本 - 使用 Microsoft GraphRAG 替代 Zep Cloud
+# GraphRAG 本地安装: cd ../graphrag && pip install -e packages/graphrag
+# ===========================================
+
+# ============= 核心框架 =============
+flask>=3.0.0
+flask-cors>=6.0.0
+
+# ============= LLM 相关 =============
+# OpenAI SDK（统一使用 OpenAI 格式调用 LLM）
+openai>=1.0.0
+
+# ============= Microsoft GraphRAG（替代 Zep Cloud） =============
+# GraphRAG 本地安装方式（推荐）：
+#   cd graphrag && pip install -e packages/graphrag -e packages/graphrag-llm \
+#     -e packages/graphrag-common -e packages/graphrag-storage \
+#     -e packages/graphrag-chunking -e packages/graphrag-vectors \
+#     -e packages/graphrag-cache -e packages/graphrag-input
+#
+# 或从 PyPI 安装（需要 graphrag >= 3.0.0）：
+#   graphrag>=3.0.0
+#
+# GraphRAG 依赖
+networkx>=3.4
+numpy>=2.1
+pandas>=2.2
+pyarrow>=15.0           # Parquet 文件读写
+lancedb>=0.6.0          # 本地向量数据库（替代 Zep 云端向量存储）
+graspologic-native>=1.2 # 图聚类算法（可选，用于社区检测）
+nltk>=3.9
+
+# ============= OASIS 社交媒体模拟 =============
+# OASIS 社交模拟框架
+camel-oasis==0.2.5
+camel-ai==0.2.78
+
+# ============= 文件处理 =============
+PyMuPDF>=1.24.0
+# 编码检测（支持非UTF-8编码的文本文件）
+charset-normalizer>=3.0.0
+chardet>=5.0.0
+
+# ============= 工具库 =============
+# 环境变量加载
+python-dotenv>=1.0.0
+
+# 数据验证
+pydantic>=2.0.0

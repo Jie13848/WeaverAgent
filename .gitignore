@@ -1,0 +1,75 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# 环境变量（保护敏感信息）
+.env
+.env.local
+.env.*.local
+.env.development
+.env.test
+.env.production
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+.eggs/
+*.egg-info/
+dist/
+build/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 测试
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Cursor
+.cursor/
+.claude/
+
+# 文档与测试程序
+mydoc/
+mytest/
+
+# 日志文件
+backend/logs/
+*.log
+
+# 上传文件
+backend/uploads/
+
+# RAG 向量索引（本地生成）
+backend/rag_index/
+
+# === 开源仓库排除项（2026-04 新增）=========================
+# 研究/基准数据（非引擎代码）
+/data/
+/rag_benchmark_100/
+/rag_benchmark_100_md/
+
+# 嵌入式 vendored 依赖的子 .git（确保 graphrag/ 作为普通源码提交）
+/graphrag/.git/
+
+# 本地图谱数据（可能含用户私有产物）
+/graphrag_data/
+
+# 生成的报告/日志（可选，保留代码但忽略产物）
+/reports/__pycache__/

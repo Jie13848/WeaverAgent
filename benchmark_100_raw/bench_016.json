@@ -1,0 +1,366 @@
+{
+  "corpus_id": 214469428,
+  "parsed_title": "The Thirty-Fourth AAAI Conference on Artificial Intelligence (AAAI-20) FlowScope: Spotting Money Laundering Based on Graphs",
+  "parsed_authors": [
+    "Xiangfeng Li \nBeijing University of Post and Telecommunication",
+    "Shenghua Liu \nInstitute of Computing Technology\nChinese Academy of Sciences",
+    "Zifeng Li \nUniversity of Surrey",
+    "Xiaotian Han han@tamu.edu \nTexas A&M University",
+    "Chuan Shi shichuan@bupt.edu.cn \nBeijing University of Post and Telecommunication",
+    "Bryan Hooi bryan.hooi.ky@gmail.com \nSchool of Computer Science\nNational University of Singapore",
+    "He Huang huanghe@citicbank.com \nChina Citic Bank",
+    "Xueqi Cheng \nInstitute of Computing Technology\nChinese Academy of Sciences"
+  ],
+  "abstract": "Given a graph of the money transfers between accounts of a bank, how can we detect money laundering? Money laundering refers to criminals using the bank's services to move massive amounts of illegal money to untraceable destination accounts, in order to inject their illegal money into the legitimate financial system. Existing graph fraud detection approaches focus on dense subgraph detection, without considering the fact that money laundering involves high-volume flows of funds through chains of bank accounts, thereby decreasing their detection accuracy. Instead, we propose to model the transactions using a multipartite graph, and detect the complete flow of money from source to destination using a scalable algorithm, FlowScope. Theoretical analysis shows that FlowScope provides guarantees in terms of the amount of money that fraudsters can transfer without being detected. FlowScope outperforms state-of-the-art baselines in accurately detecting the accounts involved in money laundering, in both injected and real-world data settings.",
+  "sections": [
+    {
+      "content": "Given a big tripartite or multipartite graph, how can we spot the most suspicious dense flow? Such a flow can be an illegal money laundering (ML) process from sources to untraceable destinations through many adverserial middle accounts and transfers, or transportation flow shows interesting needs of a group of customers. Fig. 1 shows an example of ML within a subgraph, containing two-step flow from source to middle to destination accounts.\nMost existing anti-money laundering algorithms (Wang and Yang 2007;Tang and Yin 2005;Lv, Ji, and Zhang 2008;Awasthi 2012;Paula et al. 2016) ignore the chain transfer scheme of money laundering behavior, and also ignore complex dependencies between transactions, leading to low Copyright c 2020, Association for the Advancement of Artificial Intelligence (www.aaai.org). All rights reserved.\n* CAS Key Laboratory of Network Data Science and Technology and University of Chinese Academy of Sciences, Beijing, China # Corresponding authors detection accuracy and easy evasion by adversaries. Dense subgraph or subtensor detection algorithms (Liu, Hooi, and Faloutsos 2017;Shin et al. 2017;Prakash et al. 2010;Hooi et al. 2016) have been used for graph fraud detection, but also only consider single-step transfers. Although (Michalak and Korczak 2011) claims to handle chain transactions, it needs manually labeled data to train this model, whereas such data is rare, and the use of specific labels can make the model less robust for use in different datasets. In contrast, our FlowScope in this paper considers multistep flows of funds: from senders, through middle accounts, to receivers. In the example based on synthetic data in Fig.  2, fraudulent flows consist of two steps: from A to M and M to C, where the fraudulent accounts are plotted in the upper left of each adjacency matrix. FlowScope correctly detects the accounts involved in this two-step flow, while other algorithms detect parts of the two disconnected hyperbolic blocks, which resemble communities commonly observed in real graphs (Araujo et al. 2014).\nSpecifically, the FlowScope, proposed in this paper, is a flow-based approach for detecting money laundering behavior that detects chains of transactions. Due to highly skewed portion of ML accounts in real data, we propose an optimiza- The remaining edges are disconnected hyperbolic blocks which resemble normal communities in real graphs (Araujo et al. 2014). Our FlowScope detects exactly the injections. In real-world CBank data, FlowScope achieves the best performance, i.e. accurate and early detection (less money being laundered), with ground-truth label in (c), and injection of multi-step ML flow in (d).\ntion problem to find suspicious accounts, instead of using a supervised learning model. Our main ideas are as follows: we model the problem using multipartite graphs, and define a novel anomalousness metric for transfer flows. High values of the metric indicate high-volume flows of funds which also do not leave much money left behind in middle accounts, through specific paths along the graph. In contrast, normal (i.e. honest) accounts do not always transfer money to specific accounts consistently, and also do not clear the middle accounts immediately , thus having lower values of the metric. FlowScope searches for fraudulent accounts by optimizing our metric, jointly optimizing over subsets of source, middle and destination accounts greedily. Moreover, we provide a theoretical guarantee on the near-optimality of our detection, and an upper bound on the amount of money a fraudster can transfer without being detected.\nIn summary, the main advantages of our work are:\n• Novel anomalousness metric for money-laundering flow: We propose a novel anomalousness metric for dense and multi-step flow, and show its utility for detecting ML.\n• Theoretical guarantee: We show the theoretical bound of near-optimality of our algorithm for detecting flow in graphs, as well as an upper bound on the amount of money that fraudsters can transfer, given limited resources of bank accounts.\n• Effectiveness and robustness: FlowScope outperforms state-of-the-art baselines under various graph topologies, by accurately catching ML in an earlier stage (i.e. when less volume of illegal money is injected, see Fig. 3a). And FlowScope effectively detects adversarial ML when using more fraudulent accounts, and longer transfer chains (see Fig. 3c and 2d).\n• Scalability: FlowScope is near-linear with the number of edges (i.e. transfers, see Fig. 5b), thus being well-suited to the rapid growth of the banking sector.\nOur algorithm is reproducible, and open-sourced 1 .",
+      "title": "Introduction"
+    },
+    {
+      "content": "The common approaches used for anti-ML are rule-based classification. (Rajput et al. 2014) presented an ontologybased expert system to detect suspicious transactions. (Khanuja and Adane 2014) monitored ongoing transactions and qualified the degree of anomaly by Dempster Shafer Theory. However, rule-based algorithms are easy to be evaded by fraudsters.\nMachine learning algorithms are also applied for detecting ML activities. SVM was applied in (Tang and Yin 2005) to process large size of data and achieved higher accuracy. (Michalak and Korczak 2011) used fuzzy matching to catch subgraphs that may contain suspicious accounts. (Lv, Ji, and Zhang 2008) judged whether the capital flow is involved in ML activities using RBF neural networks calculating from time to time. And (Paula et al. 2016) also showed some success for using deep neural networks. However, these algorithms detect the ML activities in a supervised manner, suffering from highly skewed labels and limited adaptability. Additionally, ML detection is usually an adversarial task, and deep models may lack robustness under adversarial attacks. We propose to detect ML activities in an unsupervised manner based on graphs.\nIn many areas, data objects are inherently interrelated. Graphs provide a powerful mechanism to capture this association (Akoglu, Tong, and Koutra 2015). Many graphbased anomaly detection techniques have been developed for discovering structural anomalies. SpokEn (Prakash et al. 2010) studied patterns in eigenvectors, and was applied for anomaly detection in (Jiang et al. 2014) later. Fraudar (Hooi et al. 2016) proposed a suspiciousness metric which considers on the density of subgraph, and EigenPulse (Zhang et al. 2019) detects the dense subgraph in the streaming graphs. D-Cube (Shin et al. 2017) considers the dense subtensor problem regarding all dimensions, and CatchCore (Feng, Liu, and Cheng ) solves this problem in a Hierarchical way, while D-Spot (Yikun et al. 2019) catches high density on a subset of all dimensions in tensors. HoloScope (Liu, Hooi, and Faloutsos 2017) (Liu, Hooi, and Faloutsos 2018) proposed contrast suspiciousness, focused on the strange behavior which was far normal patterns. RRCF (Guha et al. 2016) tries to preserve pairwise distance, which is very useful for reducing false alarm. However, as these are general-purpose, they do not focus on flow across multiple nodes, which is important for accuracy and robustness against camouflage in the ML activities.\nFor ML detection, (Dreżewski, Sepielak, and Filipkowski 2015) and (Colladon and Remondi 2017) utilized social network analysis to reveal the underlying roles and organization structure. Clustering-based method (Le Khac and Kechadi 2010) detected ML activities by grouping transactions into clusters. However, those methods do not perform flow tracking, or provide theoretical guarantees.",
+      "title": "Related Work"
+    },
+    {
+      "content": "To conceal funds, money launderers make fraudulent transfers from source accounts to destination accounts, through one or many layers of middle accounts. In general, the ML process involves high money flow passing through a bank or a series of banks, we use \"bank\" in the following to refer a bank or a collection of banks that ML detection is performed on. We then assume that ML has the following traits:",
+      "title": "Problem Formulation"
+    },
+    {
+      "content": "This is because the number of fraudulent accounts is limited, and a high volume of funds need to be transferred into the bank and out of the bank in a short span of time, resulting in a dense subgraph of transfers.\nTrait 2 (zero out middle accounts). The middle accounts serve as a bridge: most of the received money will be transferred out, resulting in a balance between their weighted indegree and outdegree. This is because the money left in the middle accounts is subject to risk for fraudsters of being detected and frozen, particularly if the volume is high. Thus fraudsters leave as little money as possible in these accounts.\nAlgorithms which focus on individual transfers, e.g. feature-based approaches, can be easily evaded by adversaries by keeping each individual transfer realistic. Instead, for the sake of robustness against adversarial camouflage, we focus on combinations of high-volume transfers into the bank, internal transfers through several middle accounts, and out of the bank, which cannot be as easily hidden by the fraudsters, as follows:\nProblem 1 (ML detection). Given a money transfer graph G = (V, E), with accounts as nodes V, and transfers as edges E, Find: a dense flow of money transfers (i.e. a subgraph of G),",
+      "title": "Trait 1 (dense transfers). Fraudsters create a high-volume and dense subgraph of transfers both into the bank and out of the bank."
+    },
+    {
+      "content": "-2) it maximizes density as defined in our ML metric. The design of the ML metric is very important, because, as we will show, it allows us to offer theoretical guarantees on the near-optimal detection of the dense flow, and an upper bound on the amount of money that fraudsters can transfer.\nMinimum and maximum of node's outdegree and in-degree, ∀v i ∈ M l w i Weight assigned to a node in priority tree S * Optimal subset of nodes maximizing metriĉ S Subset returned by FlowScope S Subset just before removing node v * ∈ S * in the next step by FlowScope g(S) Metric of ML anomalousness In general, let graph G = (V, E) be a graph money transfers. Define V = X ∪W ∪Y, where W is the inner accounts of the bank, and X and Y are sets of outer accounts. X is the set of accounts that have net transfer of money into the bank, and Y is the set of accounts that have net transfer out of the bank. An edge (i, j) ∈ E indicates that account v i transfers money into v j , for v i , v j ∈ V, and e ij is the total amount of money transferred on the edge. Table 1 summarizes the main notations and symbols used in our paper.",
+      "title": "Such that: -1) the flow involves high-volume money transfers into the bank, and out of the bank to the destinations;"
+    },
+    {
+      "content": "Intuitively, high-volume flows of funds among a small number of accounts become dense subgraphs of this multipartite graph. Fraudsters may transfer through multiple layers of middle accounts, making the internal transfers more realistic to evade detection.\nWe next define how to evaluate the anomalousness of a subgraph induced by subset of nodes. For example, money transfers may follow a k-partite subgraph induced by subset\nNote that M 1 , · · · , M k−2 can have overlapped middle nodes to consider cyclic transfers during ML as camouflage. In terms of detecting suspicious 3-partite subgraph induced by subset S, we neglect the subscript of\nNevertheless, using a high number of middle layers and disguised cyclic transfers will definitely increase fraudsters' costs and risks in being caught by an audit. Therefore, for limited k, we then describe how we represent the original transfer graph G for detecting k-partite dense subgraphs.\nWe simply duplicate W by k − 2 times between source nodes X and destination nodes Y:\nNext, our ML metric is defined as follows for spotting k-partite dense flow. First define e ij as the total amount of money transfers from v i to v j , and define the total (weighted) out-degree and in-degree of node v i ∈ M l , l ∈ {1, 2, ·, k − 2}, w.r.t. node subset S:\nNext we define the minimum and maximum value between total weighted out-degree and in-degree of a middle account, w.r.t. node subset S:\nNext, our ML metric is defined as follows for spotting kpartite dense flow: Definition 1 (Anomalousness of ML for k-partite subgraph). The anomalousness of a flow from a subset of nodes A, through one layer or many layers of inner accounts M, to another subset C is:\nIntuitively, f i (S) in Eq. (3) is the maximum possible flow that could go through middle account v i ∈ M, from accounts A to accounts C. q i (S) − f i (S) is the \"remaining money\" in v i 's balance after transfers, which can be penalty of ML, since fraudsters prefer to zero out middle accounts as Trait 2. The \"remaining money\" could be retention or deficit (i.e. received from others than A and C) of middle accounts, occurring as a form of camouflage to evade detection.\nThe numerator in the objective (3) only uses the degree of middle accounts M 1 , · · · , M k−2 , since out-degree and in-degree of middle accounts are related to themselves and those of source nodes A and target nodes C.\nInterpretation of λ and our metric: We define λ as the imbalance cost rate, a constant coefficient which quantifies to what extent the fraudsters would suffer due to a unit of retention or deficit (cost of camouflage). Now our anomalousness metric g(S) can be interpreted as the potential profit, i.e. earnings subtracted by cost, per account that the fraudulent accounts in subset S could make in a ML process. Example 1 (Anomalousness of ML in a subgraph). Fig. 1 illustrates an example of ML from real-world bank. The sizes of nodes sets, A, M and C, are 4, 12, 2 separately. v 5 both receives and transfer out money of about 452.1 million Yuan, leaving q 5 (S) − f 5 (S) ≈ 0 in balance. So there is basically no money is left over in v 5 , or borrowed from outside or previous deposits. As we can see, our anomalousness metric captures the characteristics of real-world ML.\nAs we can see, this example also agrees with Trait 1 and Trait 2 as mentioned before. The carefully designed metric also has the following advantages: a) scalable, and b) offers theoretical guarantees, which means a scalable algorithm can be designed for the metric, and the approximation algorithm provides theoretical bounds to optimality, as we will show later.\nMoreover, the metric (4) measures the \"density\" not only by considering the topology density, but also based on the volume of money transferred i.e. weighted edges. Thus, even if high volumes of money are transferred along a sparse topology, those transfers will be very suspicious in our proposed metric.",
+      "title": "Proposed metric"
+    },
+    {
+      "content": "We propose a near-greedy algorithm, FlowScope, to find subset S that maximizes the objective g(S) in (3). We first build a priority tree for nodes in S. The weight (i.e. priority) assigned to node v i is defined as:\nwhere d i (S) is the degree of node itself. Note that we can also add prior anomalousness as a weight to w i (S) for applications. The algorithm is described in Alg 1. After building the priority tree, we perform the near greedy optimization: subset S starts at the whole node set; in every iteration we remove the node v in S with minimum weight in the tree, approximately maximizing objective (3); and then we update the weight of all its connected nodes. The iteration is repeated until one of node sets A, M 1 , · · ·, M k−2 , C is empty. Finally, the subsetŜ that we have seen with the largest value g(Ŝ) is returned. The complexity of FlowScope for k-partite flow is O(k|E|log|V|) 2 .\nIn a real-world setting, we have no prior knowledge on how many middle layers are used by fraudsters. However, too many steps of transfers also raise the risks and costs. So it is possible that we give an upper bound K. To detect multi-step laundering, we then try every possible k up to at most K, and return the subset maximizing the follows:",
+      "title": "Proposed algorithm: FlowScope"
+    },
+    {
+      "content": "Input: Graph G = (V, E) Output: Node set of dense tripartite flow:Ŝ 1 A← X , M 1 ← W, · · · , M k−2 ← W, C ← Y // generate k-partite node subsets from G 2 S ← A ∪ M 1 ∪ · · · ∪ M k−2 ∪ C 3 w i ← calculate node weight as Eq. (5) 4 T ← build priority tree for S with w i (S) 5 while A, M 1 , · · · , M k−2 and C is not empty do 6 v ← find the minimum weighted node in T 7 S ← S \\ {v} 8 update priorities in T for all neighbors of v 9 g(S) ← calculate as Eq. (3) 10 end 11 returnŜ that maximizes g(S) seen during the loop.\nIn terms of detecting another dense subgraphs, we can simply remove the previous one, and rerun our algorithm. Moreover, the algorithm is near-greedy, yet provide a theoretical guarantee to approximate the optimal as we will show below.",
+      "title": "Algorithm 1: FlowScope"
+    },
+    {
+      "content": "For simplicity, we analyze FlowScope theoretically in case of three transfer layers. First of all, we show two lemmas derived from our algorithm before showing the theoretical bound 2 .\nLet S * = A * ∪ M * ∪ C * be the optimal subset. Then we have Lemma 1. ∀v i ∈ S * , then (1 + λ)w i (S * ) ≥ g(S * ).\n. Lemma 1 provides a lower bound of the weight of nodes in the optimal subset. Lemma 2 shows the relationship between the weight of a particular node measured in the graph over optimal set S * and its weight in the graph over the larger superset S . Now let S be the subset just before the first node v i ∈ S * was removed, andŜ be the subset returned by FlowScope. Thus, the theoretical bound that our FlowScope algorithm can achieve is:\nTheorem 1 (Theoretical Bound). Given graph G and anomalousness metric of ML g(S), the subsetŜ returned by FlowScope satisfies:\nIn formula (6), ε = max vi∈S * {q i (V) − q i (S * )} i.e. the highest volume of money transfers that a laundering account v i ∈ S * sends to or receives from other non-fraudulent accounts as possible camouflage. Note that the volume of camouflage ε usually cannot be as large as the volume of fraudulent transfers. Camouflage is much smaller, otherwise fraudsters take too much cost and risk for camouflage. Coefficient |M | |S | = (1 + |A |+|C | |M | ) −1 cannot be arbitrarily small, because |M |≥ |M * | as ML fraudsters use many middle accounts. Since v i ∈ S * at the same time is the next node removed from S by FlowScope, then ∀v j ∈ A ∪ C satisfies:\nassuming that a small amount or none of money transfers are used as camouflage. Hence such nodes are limited in a real transfer graph, and |A |+|C | cannot be very large.\nNext we show that the limited bound (6) holds:\nTheorem 2 (Bounding Money Laundering). SupposeŜ is the subset returned by FlowScope. The maximum amount of money that may be laundered per account in our dataset without being detected is given by:\nwhere n 0 is the number of accounts used by fraudsters, ε denotes the maximum amount of transfer to non-fraudulent accounts as we expected in a particular account that gets involved in ML, and η denotes the deficit or retention, the criminals, if exist, are suffering as a percentage of dirty money laundered:\nTheorem 2 provides an estimation of the amount of money that could be laundered per account in our dataset without being detected, and gives the formulation as a function of the retention or deficit fraudsters can tolerate and the amount of transfer to other non-fraudulent accounts they have.",
+      "title": "Theoretical Analysis"
+    },
+    {
+      "content": "The datasets used are summarized in Table 2, CBank dataset: Real-world transfer data from an anonymous bank under an NDA agreement, with a group of money laundering accounts being labeled, and the accounts opened in other banks are labeled. Czech Financial Dataset (CFD): An anonymous transfers of Czech bank released for Discovery Challenge in PKDD'99 (Lütkebohle ).\nTo evaluate our FlowScope under various money laundering behaviors, we inject ML as follows: fraudulent accounts are randomly picked from V as the multipartite groups, e.g. A, M and C. Denote the total number of injected accounts as N . The edges between each group are randomly generated with probability p. The total amount of laundering money D, starting from A, through M, to C, is assigned to generate edges proportional to Gaussian distribution (mean = 10 and std = 1). The balance of accounts in M is kept according to the total in-degree of each node. Camouflage edges are randomly connected to normal accounts, with amount of money for each edge uniformly generated from 100 to 1000. Note that we remove labeled fraudsters in CBank when performing injection experiments.  Fig. 3a-3b, we keep # of accounts as (7,5,3), and evaluate on different amount of money. FlowScope can detect earlier ML, i.e. the detection reaches high accuracy when fraudsters launder a smaller amount of money. In Fig.  3c-3d, we keep amount of money as 6 billion and 210 million separately, and evaluate on different # of accounts with ratio 7:5:3. Other possible # of accounts and ratios are tested in our result  The evaluation of our FlowScope is organized according to the following four questions: effectiveness, real-world performance, robustness against longer transfer chains and scalability 3 .",
+      "title": "Experiments"
+    },
+    {
+      "content": "We first conduct an experiment on a synthetic dataset show in Fig. 2a-2b. The two adjacency matrices of transfer subgraphs are generated by SNAP network library (Leskovec and Faloutsos 2007). Hyperbolic and rectangular blocks have volume density around 0.8 and 0.7 respectively. Thus we can see that FlowScope detects exactly the fraudulent blocks, while other baselines return parts of two disconnected hyperbolic blocks, which is thought to be normal communities (Araujo et al. 2014).\nIn the real scenario, the crimes can make arbitrary of topology with the respect of A, M and C accounts to deceive the anti-ML system. So fraudsters are injected with a lot of variants to check the robustness of the algorithm in this experiment 4 .\nThe influence of the amount of money: In this experiment, given sizes of A, M, C and edge probabilities fixed, we increase the amount of injected money laundered step by step while fixing the other conditions. The results were shown in Fig. 3a-3b, in both cases, FlowScope detects the ML behavior early and accurately, and the methods based on bipartite graph are unable to catch suspicious tripartite dense flow in the graph. RRCF (Guha et al. 2016) gives the lowest performance on the injected experiment, as it generally catches the largest amount of money transferred naturally within the bank. HoloScope is also overly influenced by such large amount of transfers due to its definition of the 'contrast suspiciousness' measure.\nThe influence of the number of fraudulent accounts: Another possible case is that the money launderers try to employ as many as people possible to disperse the dirty money, making the ML behavior much harder to detect. In this experiment we increase the number of fraudsters while keeping other conditions unchanged. The value of the amount of injected money D over the total number of fraudsters N , i.e. density(by the number of accounts) is used as horizontal axis in Fig. 3c-3d, which illustrate FlowScope's effectiveness and robustness against large ML groups.",
+      "title": "Effectiveness: one middle layer (Q1)"
+    },
+    {
+      "content": "We summarize the comparison results in transfer data of CBank and CFD in Table 3. We use a slash '/' to separate results from two kinds of injections in the table for saving space: 1) Varying amount of money injected: injection of different volumes of money, from 300 million to 3 billion, given fixed number of accounts in each layer. For example, in the row of 7:5:3, we inject money laundering through 7, 5, and 3 accounts in the respective layers; 2) Varying # of accounts injected: injection of different # of accounts given a fixed volume of money, e.g. in the row of 7:5:3, we inject (7, 5, 3) fraudulent accounts in the respective layers, then (14, 10, 6), and so on.\nThen two metrics are evaluated for comparison. FAUC: the areas under curve of F-measure as in Fig. 3. We normalize the density in horizontal axis to scale FAUC between 0 and 1. Higher FAUC indicates better performance. 'F1 ≥ 0.9': the lower bound of money volume (in million $) or upper bound of account size such that the F-measure curve stays above or equal to 0.9, as low volume of money and large size of accounts can reduce detection accuracy.\nThus we can see from the table, FlowScope achieves the best results at most of the settings, indicating earlier and more accurate detection for more fraudulent accounts than  baselines, which has better results when the ratio is 7:5:3.",
+      "title": "Summary comparisons in table:"
+    },
+    {
+      "content": "Our CBank dataset contains labeled ML activity: based on the A to M to C ML schema, the number of each type of accounts is 4, 12, 2 as shown in Fig. 1. We test how accurately and early, we can detect the fraudsters in CBank dataset. To do this, we first scale down the percentage of dirty money laundered from source accounts to destination accounts, then gradually increase the volume of money laundering linearly back to the actual value in the dataset. As shown in Fig. 2c, our FlowScope is the earliest to catch the ML behaviors accurately, as the total volume of dirty money is roughly 10% lower than other baselines given the same accuracy, and is the only algorithm catching the exact ML fraudsters.",
+      "title": "Real-world performance (Q2)"
+    },
+    {
+      "content": "Further, we investigate the case where the criminals transfer the dirty money using two levels of middle accounts, which is much more difficult to detect. The injection is made in the same way for the two groups of middle accounts. As illustrated in Fig. 2d (setting sizes=(3,7,7,3) and p=0.6 in CBank data) and Fig. 4a-4b, for different sizes of the transfer groups. The results show that even when ML has longer transfer chains, our algorithm by far outperforms the baselines, indicating FlowScope's ability to catch suspicious multi-step flow of money transfers.",
+      "title": "Robustness against longer transfer chains (Q3)"
+    },
+    {
+      "content": "Sensitivity: FlowScope is not sensitive to constant coefficient λ within reasonable range (see Fig. 5a ). We hence set λ to 4.0 for all our experiments as we assume 1/λ= 0.25 is the highest rate of retention or deficit as camouflage that fraudsters can afford. We conduct experiments on CBank with ground-truth labels with a series of λ fixing the other conditions. FAUC is measured for each λ. As illustrated in Fig. 5a, FlowScope is not sensitive to λ within a reasonable range. Scalability: We use the CBank dataset by accumulating time by hours, to get increasing-size data. As Fig. 5b shows, FlowScope is nearly linear with the number of edges.",
+      "title": "Sensitivity and Scalability (Q4)"
+    },
+    {
+      "content": "In this paper, we model the money laundering problem as detecting the densest multi-step flow, and define a novel density metric. An algorithm FlowScope is proposed for searching dense flow in big transaction graphs from banks accurately yet efficiently. We propose a novel anomalousness metric for dense multipartite flow. FlowScope offers theoretical guarantees on the near optimal detection of the dense flow. Experiments demonstrate the effectness of FlowScope's utility in detecting money laundering, as it outperforms state-of-the-art baselines under various experiment settings. Meanwhile, FlowScope is near-linear with the number of transactions. The code is open-sourced for reproducibility.",
+      "title": "Conclusion"
+    },
+    {
+      "content": "",
+      "title": "Figure 1 :"
+    },
+    {
+      "content": "",
+      "title": "Figure 2 :"
+    },
+    {
+      "content": "",
+      "title": "Figure 3 :"
+    },
+    {
+      "content": "",
+      "title": "Figure 4 :Figure 5 :"
+    },
+    {
+      "content": "",
+      "title": "Table 1 :"
+    },
+    {
+      "content": "",
+      "title": "Table 2 :"
+    },
+    {
+      "content": "",
+      "title": "Table 3 :"
+    }
+  ],
+  "figures": [
+    {
+      "caption": "An example of money laundering transfers in a bank, creating a dense tripartite subgraph. The left accounts A are sources laundering money through the middle accounts M to the right destination accounts C. Both A and C are outer accounts of the bank. Edge color and node size indicates the amount of money transferred.",
+      "content": "Figure 1 :\n1An example of money laundering transfers in a bank, creating a dense tripartite subgraph. The left accounts A are sources laundering money through the middle accounts M to the right destination accounts C. Both A and C are outer accounts of the bank. Edge color and node size indicates the amount of money transferred.",
+      "id": ""
+    },
+    {
+      "caption": "FlowScope performs the best in money laundering detection. In (a) and (b), FlowScope exactly catches the 2-step flow of money laundering transfers in synthetic data. The two matrices are bipartite adjacency matrices for transfers into (A-M), and out (M-C) of the bank's accounts. The top-left blocks are accounts involved in injected money laundering.",
+      "content": "Figure 2 :\n2FlowScope performs the best in money laundering detection. In (a) and (b), FlowScope exactly catches the 2-step flow of money laundering transfers in synthetic data. The two matrices are bipartite adjacency matrices for transfers into (A-M), and out (M-C) of the bank's accounts. The top-left blocks are accounts involved in injected money laundering.",
+      "id": ""
+    },
+    {
+      "caption": "FlowScope outperforms baselines robustly under different adversarial densities by descending amount of money or ascending # of accounts. In",
+      "content": "Figure 3 :\n3FlowScope outperforms baselines robustly under different adversarial densities by descending amount of money or ascending # of accounts. In",
+      "id": ""
+    },
+    {
+      "caption": "FlowScope is robust against longer transfer chains. Model analysis of FlowScope.",
+      "content": "Figure 4 :Figure 5 :\n45FlowScope is robust against longer transfer chains. Model analysis of FlowScope.",
+      "id": ""
+    },
+    {
+      "caption": "Notations and symbols Symbol Interpretation W Inner accounts of the bank X , Y Outer accounts mainly transferring money into or receiving money transfers out of the bank",
+      "content": "Table 1 :\n1Notations and symbols Symbol Interpretation W Inner accounts of the bank X , Y Outer accounts mainly transferring money into or receiving money transfers out of the bank",
+      "id": ""
+    },
+    {
+      "caption": "table.",
+      "content": "table.Datasets #Nodes \n#Edges \nTime Span \n\nCBank \n\n6.13M \n43.98M \nAug.07,2017 -\nAug.13,2017 \n0.99M,3.15M, \n1.99M \n\nCFD \n11.38K \n273.51K \nJan.01,1993 -\nDec.31,1998",
+      "id": ""
+    },
+    {
+      "caption": "The statistics of the real-world datasets.",
+      "content": "Table 2 :\n2The statistics of the real-world datasets.",
+      "id": ""
+    },
+    {
+      "caption": "Experimental results. The results of injected different volumes of money and # of accounts are reported in one cell separated by '/'. And '-' in the table means never returning a possible solution either in limited time or injection density.",
+      "content": "Table 3 :\n3Experimental results. The results of injected different volumes of money and # of accounts are reported in one cell separated by '/'. And '-' in the table means never returning a possible solution either in limited time or injection density.",
+      "id": ""
+    }
+  ],
+  "references": [
+    {
+      "doi": "",
+      "text": "Graph based anomaly detection and description: a survey. L Akoglu, H Tong, D Koutra, Data mining and knowledge discovery. 293Akoglu, L.; Tong, H.; and Koutra, D. 2015. Graph based anomaly detection and description: a survey. Data mining and knowledge discovery 29(3):626-688."
+    },
+    {
+      "doi": "",
+      "text": "Beyond blocks: Hyperbolic community detection. M Araujo, S Günnemann, G Mateos, C Faloutsos, Joint European Conference on Machine Learning and Knowledge Discovery in Databases. SpringerAraujo, M.; Günnemann, S.; Mateos, G.; and Faloutsos, C. 2014. Beyond blocks: Hyperbolic community detection. In Joint European Conference on Machine Learning and Knowledge Discovery in Databases, 50-65. Springer."
+    },
+    {
+      "doi": "",
+      "text": "Clustering algorithms for anti-money laundering using graph theory and social network analysis. A Awasthi, Awasthi, A. 2012. Clustering algorithms for anti-money laundering using graph theory and social network analysis."
+    },
+    {
+      "doi": "",
+      "text": "Using social network analysis to prevent money laundering. A F Colladon, E Remondi, Expert Systems with Applications. 67Colladon, A. F., and Remondi, E. 2017. Using social net- work analysis to prevent money laundering. Expert Systems with Applications 67:49-58."
+    },
+    {
+      "doi": "",
+      "text": "The application of social network analysis algorithms in a system supporting money laundering detection. R Dreżewski, J Sepielak, W Filipkowski, Information Sciences. 295Dreżewski, R.; Sepielak, J.; and Filipkowski, W. 2015. The application of social network analysis algorithms in a sys- tem supporting money laundering detection. Information Sciences 295:18-32."
+    },
+    {
+      "doi": "",
+      "text": "Catchcore: Catching hierarchical dense subtensor. W Feng, S Liu, X Cheng, Feng, W.; Liu, S.; and Cheng, X. Catchcore: Catching hier- archical dense subtensor."
+    },
+    {
+      "doi": "",
+      "text": "Robust random conferenceut forest based anomaly detection on streams. S Guha, N Mishra, G Roy, O Schrijvers, International conference on machine learning. Guha, S.; Mishra, N.; Roy, G.; and Schrijvers, O. 2016. Ro- bust random conferenceut forest based anomaly detection on streams. In International conference on machine learning, 2712-2721."
+    },
+    {
+      "doi": "",
+      "text": "Fraudar: Bounding graph fraud in the face of camouflage. B Hooi, H A Song, A Beutel, N Shah, K Shin, C Faloutsos, Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining. the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data MiningACMHooi, B.; Song, H. A.; Beutel, A.; Shah, N.; Shin, K.; and Faloutsos, C. 2016. Fraudar: Bounding graph fraud in the face of camouflage. In Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discov- ery and Data Mining, 895-904. ACM."
+    },
+    {
+      "doi": "",
+      "text": "Inferring strange behavior from connectivity pattern in social networks. M Jiang, P Cui, A Beutel, C Faloutsos, Yang , S , International Symposium on Security in Computing and Communication. Khanuja, H. K., and Adane, D. S.SpringerPacific-Asia Conference on Knowledge Discovery and Data MiningJiang, M.; Cui, P.; Beutel, A.; Faloutsos, C.; and Yang, S. 2014. Inferring strange behavior from connectivity pattern in social networks. In Pacific-Asia Conference on Knowl- edge Discovery and Data Mining, 126-138. Springer. Khanuja, H. K., and Adane, D. S. 2014. Forensic analy- sis for monitoring database transactions. In International Symposium on Security in Computing and Communication, 201-210. Springer."
+    },
+    {
+      "doi": "",
+      "text": "Application of data mining for anti-money laundering detection: A case study. Le Khac, N A Kechadi, M.-T , Data Mining Workshops (ICDMW), 2010 IEEE International Conference on. IEEELe Khac, N. A., and Kechadi, M.-T. 2010. Application of data mining for anti-money laundering detection: A case study. In Data Mining Workshops (ICDMW), 2010 IEEE International Conference on, 577-584. IEEE."
+    },
+    {
+      "doi": "",
+      "text": "Scalable modeling of real graphs using kronecker multiplication. J Leskovec, C Faloutsos, Proceedings of the 24th international conference on Machine learning. the 24th international conference on Machine learningACMLeskovec, J., and Faloutsos, C. 2007. Scalable modeling of real graphs using kronecker multiplication. In Proceedings of the 24th international conference on Machine learning, 497-504. ACM."
+    },
+    {
+      "doi": "",
+      "text": "Holoscope: Topology-and-spike aware fraud detection. S Liu, B Hooi, C Faloutsos, Proceedings of the 2017 ACM on Conference on Information and Knowledge Management. the 2017 ACM on Conference on Information and Knowledge ManagementACMLiu, S.; Hooi, B.; and Faloutsos, C. 2017. Holoscope: Topology-and-spike aware fraud detection. In Proceedings of the 2017 ACM on Conference on Information and Knowl- edge Management, 1539-1548. ACM."
+    },
+    {
+      "doi": "",
+      "text": "A contrast metric for fraud detection in rich graphs. S Liu, B Hooi, C Faloutsos, IEEE Transactions on Knowledge and Data Engineering. Lütkebohle, I. BWorld Robot Control Software. Liu, S.; Hooi, B.; and Faloutsos, C. 2018. A contrast metric for fraud detection in rich graphs. IEEE Transactions on Knowledge and Data Engineering. Lütkebohle, I. BWorld Robot Control Software."
+    },
+    {
+      "doi": "",
+      "text": "A rbf neural network model for anti-money laundering. L.-T Lv, N Ji, J.-L Zhang, Wavelet Analysis and Pattern Recognition, 2008. ICWAPR'08. International Conference on. IEEE1Lv, L.-T.; Ji, N.; and Zhang, J.-L. 2008. A rbf neural net- work model for anti-money laundering. In Wavelet Analysis and Pattern Recognition, 2008. ICWAPR'08. International Conference on, volume 1, 209-215. IEEE."
+    },
+    {
+      "doi": "",
+      "text": "Graph mining approach to suspicious transaction detection. K Michalak, J Korczak, Computer Science and Information Systems (FedCSIS), 2011 Federated Conference on. IEEEMichalak, K., and Korczak, J. 2011. Graph mining approach to suspicious transaction detection. In Computer Science and Information Systems (FedCSIS), 2011 Federated Con- ference on, 69-75. IEEE."
+    },
+    {
+      "doi": "",
+      "text": "Deep learning anomaly detection as support fraud investigation in brazilian exports and anti-money laundering. E L Paula, M Ladeira, R N Carvalho, T Marzagao, 15th IEEE International Conference on Machine Learning and Applications (ICMLA). IEEEPaula, E. L.; Ladeira, M.; Carvalho, R. N.; and Marzagao, T. 2016. Deep learning anomaly detection as support fraud investigation in brazilian exports and anti-money launder- ing. In 2016 15th IEEE International Conference on Ma- chine Learning and Applications (ICMLA), 954-960. IEEE."
+    },
+    {
+      "doi": "",
+      "text": "Eigenspokes: Surprising patterns and scalable community chipping in large graphs. B A Prakash, A Sridharan, M Seshadri, S Machiraju, C Faloutsos, Pacific-Asia Conference on Knowledge Discovery and Data Mining. SpringerPrakash, B. A.; Sridharan, A.; Seshadri, M.; Machiraju, S.; and Faloutsos, C. 2010. Eigenspokes: Surprising patterns and scalable community chipping in large graphs. In Pacific- Asia Conference on Knowledge Discovery and Data Mining, 435-448. Springer."
+    },
+    {
+      "doi": "",
+      "text": "Ontology based expert-system for suspicious transactions detection. Q Rajput, N S Khan, A Larik, S Haider, K Shin, B Hooi, J Kim, C Faloutsos, Proceedings of the Tenth ACM International Conference on Web Search and Data Mining. the Tenth ACM International Conference on Web Search and Data MiningACM7Dcube: Dense-block detection in terabyte-scale tensorsRajput, Q.; Khan, N. S.; Larik, A.; and Haider, S. 2014. On- tology based expert-system for suspicious transactions de- tection. Computer and Information Science 7(1):103. Shin, K.; Hooi, B.; Kim, J.; and Faloutsos, C. 2017. D- cube: Dense-block detection in terabyte-scale tensors. In Proceedings of the Tenth ACM International Conference on Web Search and Data Mining, 681-689. ACM."
+    },
+    {
+      "doi": "",
+      "text": "Developing an intelligent data discriminating system of anti-money laundering based on svm. J Tang, Yin , J , Proceedings of 2005 International Conference on. 2005 International Conference onIEEE6Machine Learning and CyberneticsTang, J., and Yin, J. 2005. Developing an intelligent data dis- criminating system of anti-money laundering based on svm. In Machine Learning and Cybernetics, 2005. Proceedings of 2005 International Conference on, volume 6, 3453-3457. IEEE."
+    },
+    {
+      "doi": "",
+      "text": "A money laundering risk evaluation method based on decision tree. S.-N Wang, Yang , J.-G , Machine Learning and Cybernetics, 2007 International Conference on. IEEE1Wang, S.-N., and Yang, J.-G. 2007. A money laundering risk evaluation method based on decision tree. In Machine Learning and Cybernetics, 2007 International Conference on, volume 1, 283-286. IEEE."
+    },
+    {
+      "doi": "",
+      "text": "No place to hide: Catching fraudulent entities in tensors. B Yikun, L Xin, H Ling, D Yitao, L Xue, X Wei, The World Wide Web Conference. ACMYikun, B.; Xin, L.; Ling, H.; Yitao, D.; Xue, L.; and Wei, X. 2019. No place to hide: Catching fraudulent entities in tensors. In The World Wide Web Conference, 83-93. ACM."
+    },
+    {
+      "doi": "",
+      "text": "Eigenpulse: Detecting surges in large streaming graphs with row augmentation. J Zhang, S Liu, W Yu, W Feng, X Cheng, Pacific-Asia Conference on Knowledge Discovery and Data Mining. SpringerZhang, J.; Liu, S.; Yu, W.; Feng, W.; and Cheng, X. 2019. Eigenpulse: Detecting surges in large streaming graphs with row augmentation. In Pacific-Asia Conference on Knowl- edge Discovery and Data Mining, 501-513. Springer."
+    }
+  ],
+  "parsed_external_ids": {
+    "acl": null,
+    "arxiv": null,
+    "dblp": "conf/aaai/LiLLHSHHC20",
+    "doi": "10.1609/aaai.v34i04.5906",
+    "mag": 2997619488.0,
+    "pubmed": null,
+    "pubmedcentral": null
+  },
+  "source": {
+    "open_access": {
+      "license": null,
+      "status": "GOLD",
+      "url": "https://ojs.aaai.org/index.php/AAAI/article/download/5906/5762"
+    },
+    "pdf_sha": "ec62c4b6e794bda1dacc0fca2c5d075ff9d8d13c",
+    "pdf_urls": [
+      "https://ojs.aaai.org/index.php/AAAI/article/download/5906/5762"
+    ]
+  },
+  "pdf_urls": [
+    "https://ojs.aaai.org/index.php/AAAI/article/download/5906/5762"
+  ],
+  "pdf_sha": "ec62c4b6e794bda1dacc0fca2c5d075ff9d8d13c",
+  "open_access": {
+    "license": null,
+    "status": "GOLD",
+    "url": "https://ojs.aaai.org/index.php/AAAI/article/download/5906/5762"
+  },
+  "license": null,
+  "open_access_url": "https://ojs.aaai.org/index.php/AAAI/article/download/5906/5762",
+  "open_access_status": "GOLD",
+  "metadata_title": "FlowScope: Spotting Money Laundering Based on Graphs",
+  "metadata_authors": [
+    {
+      "authorId": 2108309709.0,
+      "name": "Xiangfeng Li"
+    },
+    {
+      "authorId": 8602563.0,
+      "name": "Shenghua Liu"
+    },
+    {
+      "authorId": 2118275079.0,
+      "name": "Zifeng Li"
+    },
+    {
+      "authorId": 50017230.0,
+      "name": "Xiaotian Han"
+    },
+    {
+      "authorId": 2113915032.0,
+      "name": "Chuan Shi"
+    },
+    {
+      "authorId": 2019961.0,
+      "name": "Bryan Hooi"
+    },
+    {
+      "authorId": 2146258028.0,
+      "name": "He Huang"
+    },
+    {
+      "authorId": 1717004.0,
+      "name": "Xueqi Cheng"
+    }
+  ],
+  "publicationdate": "2020-04-03",
+  "influentialcitationcount": 17,
+  "citationcount": 110,
+  "year": 2020,
+  "publicationvenueid": "bdc2e585-4e48-4e36-8af1-6d859763d405",
+  "publicationtypes": [
+    "JournalArticle",
+    "Conference"
+  ],
+  "metadata_externalids": {
+    "ACL": null,
+    "ArXiv": null,
+    "CorpusId": 214469428,
+    "DBLP": "conf/aaai/LiLLHSHHC20",
+    "DOI": "10.1609/AAAI.V34I04.5906",
+    "MAG": 2997619488.0,
+    "PubMed": null,
+    "PubMedCentral": null
+  },
+  "PubMedCentral": null,
+  "PubMed": null,
+  "MAG": 2997619488.0,
+  "DOI": "10.1609/AAAI.V34I04.5906",
+  "CorpusId": 214469428,
+  "ArxIv": null,
+  "DBLP": "conf/aaai/LiLLHSHHC20",
+  "ACL": null,
+  "referencecount": 26,
+  "venue": "AAAI Conference on Artificial Intelligence",
+  "journal": {
+    "name": null,
+    "pages": "4731-4738",
+    "volume": null
+  },
+  "volume": null,
+  "pages": "4731-4738",
+  "name": null,
+  "isopenaccess": true,
+  "url": "https://www.semanticscholar.org/paper/5eaa4656b31d32a65e50fe4308bf804e53b50df0",
+  "fieldofstudy_source": "external",
+  "fieldofstudy_category": "Computer Science",
+  "rn": 1,
+  "explicit_gpu_hours": "None specified",
+  "estimated_gpu_hours": "None specified",
+  "number_gpu": "None specified",
+  "gpu_type": "None specified",
+  "training_details": "None specified",
+  "reasoning": "None specified",
+  "summary": "This paper presents FlowScope, a novel algorithm for detecting money laundering by analyzing transactions represented in multipartite graphs. It critiques existing algorithms for focusing solely on dense subgraphs and proposes a flow-based model that tracks the entire money laundering process from sources to destinations through intermediate accounts. FlowScope introduces an anomalousness metric that considers the volume and transfer patterns of funds to enhance detection accuracy. The algorithm is shown to outperform state-of-the-art methods in various settings by accurately identifying accounts involved in laundering activities at earlier stages. Furthermore, FlowScope is scalable with theoretical guarantees on detection performance, making it suitable for practical use in banking systems. Results from experiments using real-world datasets demonstrate its effectiveness against different money laundering scenarios, emphasizing the importance of the proposed metric in achieving both accuracy and robustness in detection.",
+  "classification": "Application Paper",
+  "methods": "[\"FlowScope\"]",
+  "results": "[\"FlowScope outperforms state-of-the-art baselines in accurately detecting accounts involved in money laundering\", \"FlowScope is near-linear with the number of edges, suitable for real-time banking applications\", \"Theoretical guarantees on detection performance and maximum undetected laundering amount were established\"]",
+  "models": "[\"None specified\"]",
+  "datasets": "[\"CBank\", \"Czech Financial Dataset (CFD)\"]",
+  "metrics": "[\"FAUC\", \"F1-score\"]",
+  "limitations": null,
+  "train_row_index": 107991,
+  "stratum": "high_gt100"
+}

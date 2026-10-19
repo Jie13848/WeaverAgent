@@ -1,0 +1,446 @@
+{
+  "corpus_id": 263892219,
+  "parsed_title": "Mixup-Transformer: Dynamic Data Augmentation for NLP Tasks",
+  "parsed_authors": [
+    "Lichao Sun james.lichao.sun@gmail.com \nLehigh University",
+    "Congying Xia \nUniversity of Illinois at Chicago",
+    "Wenpeng Yin wyin@salesforce.com \nSalesforce Research",
+    "Tingting Liang liangtt@hdu.edu.cn \nHangzhou Dianzi University",
+    "Philip S Yu psyu@uic.edu \nUniversity of Illinois at Chicago",
+    "Lifang He \nLehigh University",
+    "Lichao Sun james.lichao.sun@gmail.com \nLehigh University",
+    "Congying Xia \nUniversity of Illinois at Chicago",
+    "Wenpeng Yin wyin@salesforce.com \nSalesforce Research",
+    "Tingting Liang liangtt@hdu.edu.cn \nHangzhou Dianzi University",
+    "Philip S Yu psyu@uic.edu \nUniversity of Illinois at Chicago",
+    "Lifang He \nLehigh University"
+  ],
+  "abstract": "Mixup (Zhang et al., 2017)is a latest data augmentation technique that linearly interpolates input examples and the corresponding labels. It has shown strong effectiveness in image classification by interpolating images at the pixel level. Inspired by this line of research, in this paper, we explore: i) how to apply mixup to natural language processing tasks since text data can hardly be mixed in the raw format; ii) if mixup is still effective in transformer-based learning models, e.g., BERT. To achieve the goal, we incorporate mixup to transformer-based pre-trained architecture, named \"mixup-transformer\", for a wide range of NLP tasks while keeping the whole end-to-end training system. We evaluate the proposed framework by running extensive experiments on the GLUE benchmark. Furthermore, we also examine the performance of mixup-transformer in low-resource scenarios by reducing the training data with a certain ratio. Our studies show that mixup is a domain-independent data augmentation technique to pre-trained language models, resulting in significant performance improvement for transformer-based models.",
+  "sections": [
+    {
+      "content": "",
+      "title": "Introduction"
+    },
+    {
+      "content": "Deep learning has shown outstanding performance in the field of natural language processing (NLP). Recently, transformer-based methods (Devlin et al., 2018;Yang et al., 2019) have achieved state-ofthe-art performance across a wide variety of NLP tasks 1 . However, these models highly rely on the availability of large amounts of annotated data, which is expensive and labor-intensive. To solve the data scarcity problem, data augmentation is commonly used in NLP tasks. For example, Wei and Zou (2019) investigated language transformations like insertion, deletion and swap. Several works (Malandrakis et al., 2019;Yoo et al., 2019;Xia et al., 2020b;Xia et al., 2020a) utilized variational autoencoders (VAEs) (Kingma and Welling, 2013) to generate more raw inputs. Nevertheless, these methods often rely on some extra knowledge to guarantee the quality of new inputs, and they have to be working in a pipeline. Zhang et al. (2017) proposed mixup, a domain-independent data augmentation technique that linearly interpolates image inputs on the pixel-based feature space. Guo et al. (2019) tried mixup in CNN (LeCun et al., 1998) and LSTM (Hochreiter and Schmidhuber, 1997) for text applications. Despite effectiveness, they conducted mixup only on the fixed word embedding level like Zhang et al. (2017) did in image classification. Two questions arise, therefore: (i) how to apply mixup to NLP tasks if text data cannot be mixed in the raw format? Apart from the embedding feature space, what other representation spaces can be constituted and used? ii) whether or not mixup can boost the state-of-the-art further in transformer-based learning models, such as BERT (Devlin et al., 2018).\nDeep learning has shown outstanding performance in the field of natural language processing (NLP). Recently, transformer-based methods (Devlin et al., 2018;Yang et al., 2019) have achieved state-ofthe-art performance across a wide variety of NLP tasks 1 . However, these models highly rely on the availability of large amounts of annotated data, which is expensive and labor-intensive. To solve the data scarcity problem, data augmentation is commonly used in NLP tasks. For example, Wei and Zou (2019) investigated language transformations like insertion, deletion and swap. Several works (Malandrakis et al., 2019;Yoo et al., 2019;Xia et al., 2020b;Xia et al., 2020a) utilized variational autoencoders (VAEs) (Kingma and Welling, 2013) to generate more raw inputs. Nevertheless, these methods often rely on some extra knowledge to guarantee the quality of new inputs, and they have to be working in a pipeline. Zhang et al. (2017) proposed mixup, a domain-independent data augmentation technique that linearly interpolates image inputs on the pixel-based feature space. Guo et al. (2019) tried mixup in CNN (LeCun et al., 1998) and LSTM (Hochreiter and Schmidhuber, 1997) for text applications. Despite effectiveness, they conducted mixup only on the fixed word embedding level like Zhang et al. (2017) did in image classification. Two questions arise, therefore: (i) how to apply mixup to NLP tasks if text data cannot be mixed in the raw format? Apart from the embedding feature space, what other representation spaces can be constituted and used? ii) whether or not mixup can boost the state-of-the-art further in transformer-based learning models, such as BERT (Devlin et al., 2018).\nTo answer these questions, we stack a mixup layer over the final hidden layer of the pre-trained transformer-based model. The resulting system can be applied to a broad of NLP tasks; in particular, it is still end-to-end trainable. We evaluate our proposed mixup-transformer on the GLUE benchmark, which shows that mixup can consistently improve the performance of each task. Our contributions are summarized as follows:\nTo answer these questions, we stack a mixup layer over the final hidden layer of the pre-trained transformer-based model. The resulting system can be applied to a broad of NLP tasks; in particular, it is still end-to-end trainable. We evaluate our proposed mixup-transformer on the GLUE benchmark, which shows that mixup can consistently improve the performance of each task. Our contributions are summarized as follows:\n• We propose the mixup-transformer that applies mixup into transformer-based pre-trained models. To our best knowledge, this is the first work that explores the effectiveness of mixup in Transformer.\n• We propose the mixup-transformer that applies mixup into transformer-based pre-trained models. To our best knowledge, this is the first work that explores the effectiveness of mixup in Transformer.\n• In experiments, we demonstrate that mixup-transformer can consistently promote the performance across a wide range of NLP benchmarks, and it is particularly helpful in low-resource scenarios where we reduce the training data from 10% to 90%.\n• In experiments, we demonstrate that mixup-transformer can consistently promote the performance across a wide range of NLP benchmarks, and it is particularly helpful in low-resource scenarios where we reduce the training data from 10% to 90%.",
+      "title": "Introduction"
+    },
+    {
+      "content": "",
+      "title": "Mixup-Transformer"
+    },
+    {
+      "content": "In this section, we first introduce the mixup used in previous works. Then, we show how to incorporate the mixup into transformer-based methods and how to do the fine-turning on different text classification tasks. Last, we will discuss the difference between the previous works and our new approach.\nIn this section, we first introduce the mixup used in previous works. Then, we show how to incorporate the mixup into transformer-based methods and how to do the fine-turning on different text classification tasks. Last, we will discuss the difference between the previous works and our new approach.",
+      "title": "Mixup-Transformer"
+    },
+    {
+      "content": "",
+      "title": "Mixup"
+    },
+    {
+      "content": "Mixup is first proposed for image classification (Zhang et al., 2017), which incorporates the prior knowledge that linear interpolations of feature representations should lead to the same interpolations of the associated targets. In mixup, virtual training examples are constructed by two examples drawn at random from the training data:\nMixup is first proposed for image classification (Zhang et al., 2017), which incorporates the prior knowledge that linear interpolations of feature representations should lead to the same interpolations of the associated targets. In mixup, virtual training examples are constructed by two examples drawn at random from the training data:\nwhere λ could be either fixed value in [0, 1] or λ ∼ Beta(α, α), for α ∈ (0, ∞). In previous works, mixup is a static data augmentation approach that improves and robusts the performance in image classification.\nwhere λ could be either fixed value in [0, 1] or λ ∼ Beta(α, α), for α ∈ (0, ∞). In previous works, mixup is a static data augmentation approach that improves and robusts the performance in image classification.",
+      "title": "Mixup"
+    },
+    {
+      "content": "",
+      "title": "Mixup for Text Classification"
+    },
+    {
+      "content": "Text classification is the most fundamental problem in the NLP field. Unlike image data, text input consists of discrete units (words) without an inherent ordering or algebraic operations -it could be one sentence, two sentences, a paragraph or a whole document.\nText classification is the most fundamental problem in the NLP field. Unlike image data, text input consists of discrete units (words) without an inherent ordering or algebraic operations -it could be one sentence, two sentences, a paragraph or a whole document.\nThe first step of text classification is to use the word embedding to convert each word of the text into a vector representation. In the traditional approaches, the word embedding method can be bag-of-words, or a fixed word to vector mapping dictionary built by CNN or LSTM. In our approach, instead of using the traditional encoding methods, we use transformer-based pre-trained language models to learn the representations for text data. For downstream tasks, we fine-tune transformer-based models with the mixup data augmentation method. Formally, mixup-transformer constructs virtual hidden representations dynamically durning the training process as follows:\nThe first step of text classification is to use the word embedding to convert each word of the text into a vector representation. In the traditional approaches, the word embedding method can be bag-of-words, or a fixed word to vector mapping dictionary built by CNN or LSTM. In our approach, instead of using the traditional encoding methods, we use transformer-based pre-trained language models to learn the representations for text data. For downstream tasks, we fine-tune transformer-based models with the mixup data augmentation method. Formally, mixup-transformer constructs virtual hidden representations dynamically durning the training process as follows:\nwhere T (·) represents outputs of the transformer layers as shown in Figure 1. Note that, the mixup process is trained together with the fine-tuning process in an end-to-end fashion, and the hidden mixup representations are dynamic during the training process.\nwhere T (·) represents outputs of the transformer layers as shown in Figure 1. Note that, the mixup process is trained together with the fine-tuning process in an end-to-end fashion, and the hidden mixup representations are dynamic during the training process.",
+      "title": "Mixup for Text Classification"
+    },
+    {
+      "content": "",
+      "title": "Discussion"
+    },
+    {
+      "content": "In this section, we highlight two main differences between our approach and previous methods using mixup techniques (Zhang et al., 2017;Guo et al., 2019) for comparison.\nIn this section, we highlight two main differences between our approach and previous methods using mixup techniques (Zhang et al., 2017;Guo et al., 2019) for comparison.\n• Dynamic mixup representation. For each input pair, x i and x j , the previous approaches produce a fixed mixup representation given a fixed λ. However, the mixup hidden representations in our approach are dynamic since they are trained together with the fine-tuning process.\n• Dynamic mixup representation. For each input pair, x i and x j , the previous approaches produce a fixed mixup representation given a fixed λ. However, the mixup hidden representations in our approach are dynamic since they are trained together with the fine-tuning process.\n• Dynamic mixup activation. Since a pre-trained network needs to be fine-tuned for a specific task, we can dynamically activate the mixup during the training. For example, if the training epoch is 3, we can choose to use mixup in any epoch or all epochs. In our experiments, we fine-tune the model without mixup in the first half of epochs for good representations and add mixup in the last half of the epochs.\n• Dynamic mixup activation. Since a pre-trained network needs to be fine-tuned for a specific task, we can dynamically activate the mixup during the training. For example, if the training epoch is 3, we can choose to use mixup in any epoch or all epochs. In our experiments, we fine-tune the model without mixup in the first half of epochs for good representations and add mixup in the last half of the epochs.",
+      "title": "Discussion"
+    },
+    {
+      "content": "",
+      "title": "Experiments"
+    },
+    {
+      "content": "To show the effectiveness of our proposed mixup-transformer, we conduct extensive experiments by adding the mixup strategy to transformer-based models on seven NLP tasks contained in the GLUE benchmark. Furthermore, we reduce the training data with different ratios (from 10% to 90%) to see how the mixup strategy works with insufficient training data. We report the performance on development sets for all the tasks because the test time is limited by the online GLUE benchmark. Baselines. Two baselines are conducted in the experiments, including BERT-base and BERT-large (Devlin et al., 2018). We evaluate the performance of our methods by adding the mixup strategy to these two baselines.\nTo show the effectiveness of our proposed mixup-transformer, we conduct extensive experiments by adding the mixup strategy to transformer-based models on seven NLP tasks contained in the GLUE benchmark. Furthermore, we reduce the training data with different ratios (from 10% to 90%) to see how the mixup strategy works with insufficient training data. We report the performance on development sets for all the tasks because the test time is limited by the online GLUE benchmark. Baselines. Two baselines are conducted in the experiments, including BERT-base and BERT-large (Devlin et al., 2018). We evaluate the performance of our methods by adding the mixup strategy to these two baselines.\nImplementation details. When fine-tuning BERT with or without the mixup strategy for these NLP tasks, we fix the hyper-parameters as follows: the batch size is 8, the learning rate is 2e-5, the max sequence length is 128, and the number of the training epochs is 3. We test different values of λ, (from 0.1 to 0.9) on the default dataset (CoLA) and find mixup-transformer is insensitive to this hyper-parameter, so we set a fixed value of λ = 0.5. Experimental results for eight different NLP tasks are illustrated in Table 1. By adding the proposed mixup technique to BERT-base and BERT-large, the mixup-transformer improves the performance consistently on most of these tasks. The average improvement is around 1% for all the settings. The highest performance gain comes from the RTE task by adding the proposed mixup technique on BERT-base. In this experiment, the accuracy improves from 68.23% to 71.84%, which is an increase of 3.61%. The Matthew's correlation for CoLA increases from 59.71% to 62.39% (improved 2.68%) with mixup on BERT-large. Some experiments also get performance decrease with mixup. For example, adding mixup to BERT-base on STS-B decreases the Spearman correlation from 89.41% to 88.66%. Overall, most of the tasks improved (14 out of 16, while 2 got slightly worse) were found by applying mixup-transformer.\nImplementation details. When fine-tuning BERT with or without the mixup strategy for these NLP tasks, we fix the hyper-parameters as follows: the batch size is 8, the learning rate is 2e-5, the max sequence length is 128, and the number of the training epochs is 3. We test different values of λ, (from 0.1 to 0.9) on the default dataset (CoLA) and find mixup-transformer is insensitive to this hyper-parameter, so we set a fixed value of λ = 0.5. Experimental results for eight different NLP tasks are illustrated in Table 1. By adding the proposed mixup technique to BERT-base and BERT-large, the mixup-transformer improves the performance consistently on most of these tasks. The average improvement is around 1% for all the settings. The highest performance gain comes from the RTE task by adding the proposed mixup technique on BERT-base. In this experiment, the accuracy improves from 68.23% to 71.84%, which is an increase of 3.61%. The Matthew's correlation for CoLA increases from 59.71% to 62.39% (improved 2.68%) with mixup on BERT-large. Some experiments also get performance decrease with mixup. For example, adding mixup to BERT-base on STS-B decreases the Spearman correlation from 89.41% to 88.66%. Overall, most of the tasks improved (14 out of 16, while 2 got slightly worse) were found by applying mixup-transformer.",
+      "title": "Experiments"
+    },
+    {
+      "content": "",
+      "title": "Results on full data"
+    },
+    {
+      "content": "",
+      "title": "Results on full data"
+    },
+    {
+      "content": "",
+      "title": "Results on limited data"
+    },
+    {
+      "content": "As mixup is a technique for augmenting the feature space, it is interesting to see how it works when the training data is insufficient. Therefore, we reduce the training data with a certain ratio (from 10% to 90% with a step 10%) and test the effectiveness of mixup-transformer in low-resource scenarios. As shown in Table 2, BERT-large + mixup consistently outperforms BERT-large when we reduce the training data for MRPC, where the highest improvement (4.90%) is achieved when only using 40% of the training data.\nAs mixup is a technique for augmenting the feature space, it is interesting to see how it works when the training data is insufficient. Therefore, we reduce the training data with a certain ratio (from 10% to 90% with a step 10%) and test the effectiveness of mixup-transformer in low-resource scenarios. As shown in Table 2, BERT-large + mixup consistently outperforms BERT-large when we reduce the training data for MRPC, where the highest improvement (4.90%) is achieved when only using 40% of the training data.\nUsing the full training data (100%) gets an increase of 2.46%, which indicates that mixup-transformer works even better with reduced annotations. We also report the experiments of reducing training data on other tasks, including STS-B, RTE and CoLA. As shown in Figure 2, the mixup-transformer again consistently improves the performance for all the experiments. The performance gains with less training data (like 10% for STS-B, CoLA, and RTE) are higher than using full training data since data augmentation is more effective when the annotations are insufficient. Therefore, the mixup strategy is highly helpful in most low-resource scenarios.\nUsing the full training data (100%) gets an increase of 2.46%, which indicates that mixup-transformer works even better with reduced annotations. We also report the experiments of reducing training data on other tasks, including STS-B, RTE and CoLA. As shown in Figure 2, the mixup-transformer again consistently improves the performance for all the experiments. The performance gains with less training data (like 10% for STS-B, CoLA, and RTE) are higher than using full training data since data augmentation is more effective when the annotations are insufficient. Therefore, the mixup strategy is highly helpful in most low-resource scenarios.",
+      "title": "Results on limited data"
+    },
+    {
+      "content": "",
+      "title": "Conclusion"
+    },
+    {
+      "content": "In this paper, we propose the mixup-transformer that incorporates a data augmentation technique called mixup into transformer-based models for NLP tasks. Unlike using the static mixup in previous works, our approach can dynamically construct new inputs for text classification. Extensive experimental results show that mixup-transformer can be dynamically used with a pre-trained model to achieve better performance on GLUE benchmark.\nIn this paper, we propose the mixup-transformer that incorporates a data augmentation technique called mixup into transformer-based models for NLP tasks. Unlike using the static mixup in previous works, our approach can dynamically construct new inputs for text classification. Extensive experimental results show that mixup-transformer can be dynamically used with a pre-trained model to achieve better performance on GLUE benchmark.",
+      "title": "Conclusion"
+    },
+    {
+      "content": "",
+      "title": "Figure 1 :"
+    },
+    {
+      "content": "",
+      "title": "Figure 1 :"
+    },
+    {
+      "content": "",
+      "title": "Figure 2 :"
+    },
+    {
+      "content": "",
+      "title": "Figure 2 :"
+    },
+    {
+      "content": "",
+      "title": "Table 2 :"
+    },
+    {
+      "content": "",
+      "title": "Table 2 :"
+    }
+  ],
+  "figures": [
+    {
+      "caption": "The overall framework of mixup-transformer. xi, xj are two separate sentences, fed to the same Transformer T . T (xi) is the representation of the input xi, generated by T .x andŷ are the interpolated representation and label, respectively.",
+      "content": "Figure 1 :\n1The overall framework of mixup-transformer. xi, xj are two separate sentences, fed to the same Transformer T . T (xi) is the representation of the input xi, generated by T .x andŷ are the interpolated representation and label, respectively.",
+      "id": ""
+    },
+    {
+      "caption": "The overall framework of mixup-transformer. xi, xj are two separate sentences, fed to the same Transformer T . T (xi) is the representation of the input xi, generated by T .x andŷ are the interpolated representation and label, respectively.",
+      "content": "Figure 1 :\n1The overall framework of mixup-transformer. xi, xj are two separate sentences, fed to the same Transformer T . T (xi) is the representation of the input xi, generated by T .x andŷ are the interpolated representation and label, respectively.",
+      "id": ""
+    },
+    {
+      "caption": "Datasets. The General Language Understanding Evaluation (GLUE) benchmark (Wang et al., 2018) is a collection of diverse natural language understanding tasks. Experiments are conducted on eight tasks in GLUE: CoLA (Warstadt et al., 2019), SST-2 (Socher et al., 2013), MRPC (Dolan and Brockett, 2005), STS-B (Cer et al., 2017), QQP (Z. Chen and Zhao, 2018), MNLI(Williams et al., 2017), QNLI(Rajpurkar et al., 2016), RTE(Bentivogli et al., 2009).",
+      "content": "Datasets. The General Language Understanding Evaluation (GLUE) benchmark (Wang et al., 2018) is a collection of diverse natural language understanding tasks. Experiments are conducted on eight tasks in GLUE: CoLA (Warstadt et al., 2019), SST-2 (Socher et al., 2013), MRPC (Dolan and Brockett, 2005), STS-B (Cer et al., 2017), QQP (Z. Chen and Zhao, 2018), MNLI(Williams et al., 2017), QNLI(Rajpurkar et al., 2016), RTE(Bentivogli et al., 2009).",
+      "id": ""
+    },
+    {
+      "caption": "Datasets. The General Language Understanding Evaluation (GLUE) benchmark (Wang et al., 2018) is a collection of diverse natural language understanding tasks. Experiments are conducted on eight tasks in GLUE: CoLA (Warstadt et al., 2019), SST-2 (Socher et al., 2013), MRPC (Dolan and Brockett, 2005), STS-B (Cer et al., 2017), QQP (Z. Chen and Zhao, 2018), MNLI(Williams et al., 2017), QNLI(Rajpurkar et al., 2016), RTE(Bentivogli et al., 2009).",
+      "content": "Datasets. The General Language Understanding Evaluation (GLUE) benchmark (Wang et al., 2018) is a collection of diverse natural language understanding tasks. Experiments are conducted on eight tasks in GLUE: CoLA (Warstadt et al., 2019), SST-2 (Socher et al., 2013), MRPC (Dolan and Brockett, 2005), STS-B (Cer et al., 2017), QQP (Z. Chen and Zhao, 2018), MNLI(Williams et al., 2017), QNLI(Rajpurkar et al., 2016), RTE(Bentivogli et al., 2009).",
+      "id": ""
+    },
+    {
+      "caption": "mixup-transformer with BERT-large runs with reduced training data for four tasks: STS-B, MRPC, RTE and CoLA.",
+      "content": "Figure 2 :\n2mixup-transformer with BERT-large runs with reduced training data for four tasks: STS-B, MRPC, RTE and CoLA.",
+      "id": ""
+    },
+    {
+      "caption": "mixup-transformer with BERT-large runs with reduced training data for four tasks: STS-B, MRPC, RTE and CoLA.",
+      "content": "Figure 2 :\n2mixup-transformer with BERT-large runs with reduced training data for four tasks: STS-B, MRPC, RTE and CoLA.",
+      "id": ""
+    },
+    {
+      "caption": "mixup-transformer with reduced training data on MRPC. Accuracy scores are used to evaluate the performance.",
+      "content": "Table 2 :\n2mixup-transformer with reduced training data on MRPC. Accuracy scores are used to evaluate the performance.",
+      "id": ""
+    },
+    {
+      "caption": "mixup-transformer with reduced training data on MRPC. Accuracy scores are used to evaluate the performance.",
+      "content": "Table 2 :\n2mixup-transformer with reduced training data on MRPC. Accuracy scores are used to evaluate the performance.",
+      "id": ""
+    }
+  ],
+  "references": [
+    {
+      "doi": "",
+      "text": "The fifth pascal recognizing textual entailment challenge. Luisa Bentivogli, TACPeter Clark, TACIdo Dagan, TACDanilo Giampiccolo, TACLuisa Bentivogli, Peter Clark, Ido Dagan, and Danilo Giampiccolo. 2009. The fifth pascal recognizing textual entailment challenge. In TAC."
+    },
+    {
+      "doi": "arXiv:1708.00055",
+      "text": "Daniel Cer, Mona Diab, Eneko Agirre, Inigo Lopez-Gazpio, Lucia Specia, arXiv:1708.00055Semeval-2017 task 1: Semantic textual similarity-multilingual and cross-lingual focused evaluation. arXiv preprintDaniel Cer, Mona Diab, Eneko Agirre, Inigo Lopez-Gazpio, and Lucia Specia. 2017. Semeval-2017 task 1: Se- mantic textual similarity-multilingual and cross-lingual focused evaluation. arXiv preprint arXiv:1708.00055."
+    },
+    {
+      "doi": "arXiv:1810.04805",
+      "text": "Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova, arXiv:1810.04805Bert: Pre-training of deep bidirectional transformers for language understanding. arXiv preprintJacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova. 2018. Bert: Pre-training of deep bidirec- tional transformers for language understanding. arXiv preprint arXiv:1810.04805."
+    },
+    {
+      "doi": "",
+      "text": "Automatically constructing a corpus of sentential paraphrases. B William, Chris Dolan, Brockett, Proceedings of the Third International Workshop on Paraphrasing (IWP2005). the Third International Workshop on Paraphrasing (IWP2005)William B Dolan and Chris Brockett. 2005. Automatically constructing a corpus of sentential paraphrases. In Proceedings of the Third International Workshop on Paraphrasing (IWP2005)."
+    },
+    {
+      "doi": "arXiv:1905.08941",
+      "text": "Augmenting data with mixup for sentence classification: An empirical study. Hongyu Guo, Yongyi Mao, Richong Zhang, arXiv:1905.08941arXiv preprintHongyu Guo, Yongyi Mao, and Richong Zhang. 2019. Augmenting data with mixup for sentence classification: An empirical study. arXiv preprint arXiv:1905.08941."
+    },
+    {
+      "doi": "",
+      "text": "Long short-term memory. Sepp Hochreiter, Jürgen Schmidhuber, Neural computation. 98Sepp Hochreiter and Jürgen Schmidhuber. 1997. Long short-term memory. Neural computation, 9(8):1735-1780."
+    },
+    {
+      "doi": "arXiv:1312.6114",
+      "text": "P Diederik, Max Kingma, Welling, arXiv:1312.6114Auto-encoding variational bayes. arXiv preprintDiederik P Kingma and Max Welling. 2013. Auto-encoding variational bayes. arXiv preprint arXiv:1312.6114."
+    },
+    {
+      "doi": "",
+      "text": "Gradient-based learning applied to document recognition. Yann Lecun, Léon Bottou, Yoshua Bengio, Patrick Haffner, Proceedings of the IEEE. 8611Yann LeCun, Léon Bottou, Yoshua Bengio, and Patrick Haffner. 1998. Gradient-based learning applied to docu- ment recognition. Proceedings of the IEEE, 86(11):2278-2324."
+    },
+    {
+      "doi": "arXiv:1910.03487",
+      "text": "Controlled text generation for data augmentation in intelligent artificial agents. Nikolaos Malandrakis, Minmin Shen, Anuj Goyal, Shuyang Gao, Abhishek Sethi, Angeliki Metallinou, arXiv:1910.03487arXiv preprintNikolaos Malandrakis, Minmin Shen, Anuj Goyal, Shuyang Gao, Abhishek Sethi, and Angeliki Metallinou. 2019. Controlled text generation for data augmentation in intelligent artificial agents. arXiv preprint arXiv:1910.03487."
+    },
+    {
+      "doi": "arXiv:1606.05250",
+      "text": "Squad: 100,000+ questions for machine comprehension of text. Pranav Rajpurkar, Jian Zhang, Konstantin Lopyrev, Percy Liang, arXiv:1606.05250arXiv preprintPranav Rajpurkar, Jian Zhang, Konstantin Lopyrev, and Percy Liang. 2016. Squad: 100,000+ questions for machine comprehension of text. arXiv preprint arXiv:1606.05250."
+    },
+    {
+      "doi": "",
+      "text": "Recursive deep models for semantic compositionality over a sentiment treebank. Richard Socher, Alex Perelygin, Jean Wu, Jason Chuang, D Christopher, Manning, Y Andrew, Christopher Ng, Potts, Proceedings of the 2013 conference on empirical methods in natural language processing. the 2013 conference on empirical methods in natural language processingRichard Socher, Alex Perelygin, Jean Wu, Jason Chuang, Christopher D Manning, Andrew Y Ng, and Christopher Potts. 2013. Recursive deep models for semantic compositionality over a sentiment treebank. In Proceedings of the 2013 conference on empirical methods in natural language processing, pages 1631-1642."
+    },
+    {
+      "doi": "arXiv:1804.07461",
+      "text": "Alex Wang, Amanpreet Singh, Julian Michael, Felix Hill, Omer Levy, Samuel R Bowman, arXiv:1804.07461Glue: A multi-task benchmark and analysis platform for natural language understanding. arXiv preprintAlex Wang, Amanpreet Singh, Julian Michael, Felix Hill, Omer Levy, and Samuel R Bowman. 2018. Glue: A multi-task benchmark and analysis platform for natural language understanding. arXiv preprint arXiv:1804.07461."
+    },
+    {
+      "doi": "",
+      "text": "Alex Warstadt, Amanpreet Singh, Samuel R Bowman, Neural network acceptability judgments. Transactions of the Association for Computational Linguistics. 7Alex Warstadt, Amanpreet Singh, and Samuel R Bowman. 2019. Neural network acceptability judgments. Trans- actions of the Association for Computational Linguistics, 7:625-641."
+    },
+    {
+      "doi": "arXiv:1901.11196",
+      "text": "W Jason, Kai Wei, Zou, arXiv:1901.11196Eda: Easy data augmentation techniques for boosting performance on text classification tasks. arXiv preprintJason W Wei and Kai Zou. 2019. Eda: Easy data augmentation techniques for boosting performance on text classification tasks. arXiv preprint arXiv:1901.11196."
+    },
+    {
+      "doi": "arXiv:1704.05426",
+      "text": "A broad-coverage challenge corpus for sentence understanding through inference. Adina Williams, Nikita Nangia, Samuel R Bowman, arXiv:1704.05426arXiv preprintAdina Williams, Nikita Nangia, and Samuel R Bowman. 2017. A broad-coverage challenge corpus for sentence understanding through inference. arXiv preprint arXiv:1704.05426."
+    },
+    {
+      "doi": "arXiv:2009.10056",
+      "text": "Composed variational natural language generation for few-shot intents. Congying Xia, Caiming Xiong, Philip Yu, Richard Socher, arXiv:2009.10056arXiv preprintCongying Xia, Caiming Xiong, Philip Yu, and Richard Socher. 2020a. Composed variational natural language generation for few-shot intents. arXiv preprint arXiv:2009.10056."
+    },
+    {
+      "doi": "arXiv:2004.01881",
+      "text": "Cg-bert: Conditional text generation with bert for generalized few-shot intent detection. Congying Xia, Chenwei Zhang, Hoang Nguyen, Jiawei Zhang, Philip Yu, arXiv:2004.01881arXiv preprintCongying Xia, Chenwei Zhang, Hoang Nguyen, Jiawei Zhang, and Philip Yu. 2020b. Cg-bert: Conditional text generation with bert for generalized few-shot intent detection. arXiv preprint arXiv:2004.01881."
+    },
+    {
+      "doi": "",
+      "text": "Xlnet: Generalized autoregressive pretraining for language understanding. Zhilin Yang, Zihang Dai, Yiming Yang, Jaime Carbonell, R Russ, Quoc V Salakhutdinov, Le, Advances in neural information processing systems. Zhilin Yang, Zihang Dai, Yiming Yang, Jaime Carbonell, Russ R Salakhutdinov, and Quoc V Le. 2019. Xlnet: Generalized autoregressive pretraining for language understanding. In Advances in neural information process- ing systems, pages 5753-5763."
+    },
+    {
+      "doi": "",
+      "text": "Data augmentation for spoken language understanding via joint variational generation. Youhyun Kang Min Yoo, Sang-Goo Shin, Lee, Proceedings of the AAAI Conference on Artificial Intelligence. the AAAI Conference on Artificial Intelligence33Kang Min Yoo, Youhyun Shin, and Sang-goo Lee. 2019. Data augmentation for spoken language understanding via joint variational generation. In Proceedings of the AAAI Conference on Artificial Intelligence, volume 33, pages 7402-7409."
+    },
+    {
+      "doi": "",
+      "text": ". X Zhang, Z Chen, H Zhang, L Zhao, Quora question pairsX. Zhang Z. Chen, H. Zhang and L. Zhao. 2018. Quora question pairs."
+    },
+    {
+      "doi": "arXiv:1710.09412",
+      "text": "Hongyi Zhang, Moustapha Cisse, David Yann N Dauphin, Lopez-Paz, arXiv:1710.09412mixup: Beyond empirical risk minimization. arXiv preprintHongyi Zhang, Moustapha Cisse, Yann N Dauphin, and David Lopez-Paz. 2017. mixup: Beyond empirical risk minimization. arXiv preprint arXiv:1710.09412."
+    },
+    {
+      "doi": "",
+      "text": "The fifth pascal recognizing textual entailment challenge. Luisa Bentivogli, TACPeter Clark, TACIdo Dagan, TACDanilo Giampiccolo, TACLuisa Bentivogli, Peter Clark, Ido Dagan, and Danilo Giampiccolo. 2009. The fifth pascal recognizing textual entailment challenge. In TAC."
+    },
+    {
+      "doi": "arXiv:1708.00055",
+      "text": "Daniel Cer, Mona Diab, Eneko Agirre, Inigo Lopez-Gazpio, Lucia Specia, arXiv:1708.00055Semeval-2017 task 1: Semantic textual similarity-multilingual and cross-lingual focused evaluation. arXiv preprintDaniel Cer, Mona Diab, Eneko Agirre, Inigo Lopez-Gazpio, and Lucia Specia. 2017. Semeval-2017 task 1: Se- mantic textual similarity-multilingual and cross-lingual focused evaluation. arXiv preprint arXiv:1708.00055."
+    },
+    {
+      "doi": "arXiv:1810.04805",
+      "text": "Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova, arXiv:1810.04805Bert: Pre-training of deep bidirectional transformers for language understanding. arXiv preprintJacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova. 2018. Bert: Pre-training of deep bidirec- tional transformers for language understanding. arXiv preprint arXiv:1810.04805."
+    },
+    {
+      "doi": "",
+      "text": "Automatically constructing a corpus of sentential paraphrases. B William, Chris Dolan, Brockett, Proceedings of the Third International Workshop on Paraphrasing (IWP2005). the Third International Workshop on Paraphrasing (IWP2005)William B Dolan and Chris Brockett. 2005. Automatically constructing a corpus of sentential paraphrases. In Proceedings of the Third International Workshop on Paraphrasing (IWP2005)."
+    },
+    {
+      "doi": "arXiv:1905.08941",
+      "text": "Augmenting data with mixup for sentence classification: An empirical study. Hongyu Guo, Yongyi Mao, Richong Zhang, arXiv:1905.08941arXiv preprintHongyu Guo, Yongyi Mao, and Richong Zhang. 2019. Augmenting data with mixup for sentence classification: An empirical study. arXiv preprint arXiv:1905.08941."
+    },
+    {
+      "doi": "",
+      "text": "Long short-term memory. Sepp Hochreiter, Jürgen Schmidhuber, Neural computation. 98Sepp Hochreiter and Jürgen Schmidhuber. 1997. Long short-term memory. Neural computation, 9(8):1735-1780."
+    },
+    {
+      "doi": "arXiv:1312.6114",
+      "text": "P Diederik, Max Kingma, Welling, arXiv:1312.6114Auto-encoding variational bayes. arXiv preprintDiederik P Kingma and Max Welling. 2013. Auto-encoding variational bayes. arXiv preprint arXiv:1312.6114."
+    },
+    {
+      "doi": "",
+      "text": "Gradient-based learning applied to document recognition. Yann Lecun, Léon Bottou, Yoshua Bengio, Patrick Haffner, Proceedings of the IEEE. 8611Yann LeCun, Léon Bottou, Yoshua Bengio, and Patrick Haffner. 1998. Gradient-based learning applied to docu- ment recognition. Proceedings of the IEEE, 86(11):2278-2324."
+    },
+    {
+      "doi": "arXiv:1910.03487",
+      "text": "Controlled text generation for data augmentation in intelligent artificial agents. Nikolaos Malandrakis, Minmin Shen, Anuj Goyal, Shuyang Gao, Abhishek Sethi, Angeliki Metallinou, arXiv:1910.03487arXiv preprintNikolaos Malandrakis, Minmin Shen, Anuj Goyal, Shuyang Gao, Abhishek Sethi, and Angeliki Metallinou. 2019. Controlled text generation for data augmentation in intelligent artificial agents. arXiv preprint arXiv:1910.03487."
+    },
+    {
+      "doi": "arXiv:1606.05250",
+      "text": "Squad: 100,000+ questions for machine comprehension of text. Pranav Rajpurkar, Jian Zhang, Konstantin Lopyrev, Percy Liang, arXiv:1606.05250arXiv preprintPranav Rajpurkar, Jian Zhang, Konstantin Lopyrev, and Percy Liang. 2016. Squad: 100,000+ questions for machine comprehension of text. arXiv preprint arXiv:1606.05250."
+    },
+    {
+      "doi": "",
+      "text": "Recursive deep models for semantic compositionality over a sentiment treebank. Richard Socher, Alex Perelygin, Jean Wu, Jason Chuang, D Christopher, Manning, Y Andrew, Christopher Ng, Potts, Proceedings of the 2013 conference on empirical methods in natural language processing. the 2013 conference on empirical methods in natural language processingRichard Socher, Alex Perelygin, Jean Wu, Jason Chuang, Christopher D Manning, Andrew Y Ng, and Christopher Potts. 2013. Recursive deep models for semantic compositionality over a sentiment treebank. In Proceedings of the 2013 conference on empirical methods in natural language processing, pages 1631-1642."
+    },
+    {
+      "doi": "arXiv:1804.07461",
+      "text": "Alex Wang, Amanpreet Singh, Julian Michael, Felix Hill, Omer Levy, Samuel R Bowman, arXiv:1804.07461Glue: A multi-task benchmark and analysis platform for natural language understanding. arXiv preprintAlex Wang, Amanpreet Singh, Julian Michael, Felix Hill, Omer Levy, and Samuel R Bowman. 2018. Glue: A multi-task benchmark and analysis platform for natural language understanding. arXiv preprint arXiv:1804.07461."
+    },
+    {
+      "doi": "",
+      "text": "Alex Warstadt, Amanpreet Singh, Samuel R Bowman, Neural network acceptability judgments. Transactions of the Association for Computational Linguistics. 7Alex Warstadt, Amanpreet Singh, and Samuel R Bowman. 2019. Neural network acceptability judgments. Trans- actions of the Association for Computational Linguistics, 7:625-641."
+    },
+    {
+      "doi": "arXiv:1901.11196",
+      "text": "W Jason, Kai Wei, Zou, arXiv:1901.11196Eda: Easy data augmentation techniques for boosting performance on text classification tasks. arXiv preprintJason W Wei and Kai Zou. 2019. Eda: Easy data augmentation techniques for boosting performance on text classification tasks. arXiv preprint arXiv:1901.11196."
+    },
+    {
+      "doi": "arXiv:1704.05426",
+      "text": "A broad-coverage challenge corpus for sentence understanding through inference. Adina Williams, Nikita Nangia, Samuel R Bowman, arXiv:1704.05426arXiv preprintAdina Williams, Nikita Nangia, and Samuel R Bowman. 2017. A broad-coverage challenge corpus for sentence understanding through inference. arXiv preprint arXiv:1704.05426."
+    },
+    {
+      "doi": "arXiv:2009.10056",
+      "text": "Composed variational natural language generation for few-shot intents. Congying Xia, Caiming Xiong, Philip Yu, Richard Socher, arXiv:2009.10056arXiv preprintCongying Xia, Caiming Xiong, Philip Yu, and Richard Socher. 2020a. Composed variational natural language generation for few-shot intents. arXiv preprint arXiv:2009.10056."
+    },
+    {
+      "doi": "arXiv:2004.01881",
+      "text": "Cg-bert: Conditional text generation with bert for generalized few-shot intent detection. Congying Xia, Chenwei Zhang, Hoang Nguyen, Jiawei Zhang, Philip Yu, arXiv:2004.01881arXiv preprintCongying Xia, Chenwei Zhang, Hoang Nguyen, Jiawei Zhang, and Philip Yu. 2020b. Cg-bert: Conditional text generation with bert for generalized few-shot intent detection. arXiv preprint arXiv:2004.01881."
+    },
+    {
+      "doi": "",
+      "text": "Xlnet: Generalized autoregressive pretraining for language understanding. Zhilin Yang, Zihang Dai, Yiming Yang, Jaime Carbonell, R Russ, Quoc V Salakhutdinov, Le, Advances in neural information processing systems. Zhilin Yang, Zihang Dai, Yiming Yang, Jaime Carbonell, Russ R Salakhutdinov, and Quoc V Le. 2019. Xlnet: Generalized autoregressive pretraining for language understanding. In Advances in neural information process- ing systems, pages 5753-5763."
+    },
+    {
+      "doi": "",
+      "text": "Data augmentation for spoken language understanding via joint variational generation. Youhyun Kang Min Yoo, Sang-Goo Shin, Lee, Proceedings of the AAAI Conference on Artificial Intelligence. the AAAI Conference on Artificial Intelligence33Kang Min Yoo, Youhyun Shin, and Sang-goo Lee. 2019. Data augmentation for spoken language understanding via joint variational generation. In Proceedings of the AAAI Conference on Artificial Intelligence, volume 33, pages 7402-7409."
+    },
+    {
+      "doi": "",
+      "text": ". X Zhang, Z Chen, H Zhang, L Zhao, Quora question pairsX. Zhang Z. Chen, H. Zhang and L. Zhao. 2018. Quora question pairs."
+    },
+    {
+      "doi": "arXiv:1710.09412",
+      "text": "Hongyi Zhang, Moustapha Cisse, David Yann N Dauphin, Lopez-Paz, arXiv:1710.09412mixup: Beyond empirical risk minimization. arXiv preprintHongyi Zhang, Moustapha Cisse, Yann N Dauphin, and David Lopez-Paz. 2017. mixup: Beyond empirical risk minimization. arXiv preprint arXiv:1710.09412."
+    }
+  ],
+  "parsed_external_ids": {
+    "acl": "2020.coling-main.305",
+    "arxiv": null,
+    "dblp": "conf/coling/SunXYLYH20",
+    "doi": "10.18653/v1/2020.coling-main.305",
+    "mag": 3115242847.0,
+    "pubmed": null,
+    "pubmedcentral": null
+  },
+  "source": {
+    "open_access": {
+      "license": "CCBY",
+      "status": "HYBRID",
+      "url": "https://www.aclweb.org/anthology/2020.coling-main.305.pdf"
+    },
+    "pdf_sha": "3aba6c5f59080c24301121bfc3a1445fc292476b",
+    "pdf_urls": [
+      "https://www.aclweb.org/anthology/2020.coling-main.305.pdf"
+    ]
+  },
+  "pdf_urls": [
+    "https://www.aclweb.org/anthology/2020.coling-main.305.pdf"
+  ],
+  "pdf_sha": "3aba6c5f59080c24301121bfc3a1445fc292476b",
+  "open_access": {
+    "license": "CCBY",
+    "status": "HYBRID",
+    "url": "https://www.aclweb.org/anthology/2020.coling-main.305.pdf"
+  },
+  "license": "CCBY",
+  "open_access_url": "https://www.aclweb.org/anthology/2020.coling-main.305.pdf",
+  "open_access_status": "HYBRID",
+  "metadata_title": "Mixup-Transformer: Dynamic Data Augmentation for NLP Tasks",
+  "metadata_authors": [
+    {
+      "authorId": 2257354508.0,
+      "name": "Lichao Sun"
+    },
+    {
+      "authorId": 47414558.0,
+      "name": "Congying Xia"
+    },
+    {
+      "authorId": 2257213255.0,
+      "name": "Wenpeng Yin"
+    },
+    {
+      "authorId": 2238207130.0,
+      "name": "Tingting Liang"
+    },
+    {
+      "authorId": 2258679535.0,
+      "name": "Philip S. Yu"
+    },
+    {
+      "authorId": 40901818.0,
+      "name": "Lifang He"
+    }
+  ],
+  "publicationdate": "2020-12-01",
+  "influentialcitationcount": 9,
+  "citationcount": 131,
+  "year": 2020,
+  "publicationvenueid": "f51ff783-cdff-4e22-94fb-28e6336d17b3",
+  "publicationtypes": [
+    "JournalArticle",
+    "Conference"
+  ],
+  "metadata_externalids": {
+    "ACL": "2020.coling-main.305",
+    "ArXiv": null,
+    "CorpusId": 263892219,
+    "DBLP": "conf/coling/SunXYLYH20",
+    "DOI": "10.18653/V1/2020.COLING-MAIN.305",
+    "MAG": 3115242847.0,
+    "PubMed": null,
+    "PubMedCentral": null
+  },
+  "PubMedCentral": null,
+  "PubMed": null,
+  "MAG": 3115242847.0,
+  "DOI": "10.18653/V1/2020.COLING-MAIN.305",
+  "CorpusId": 263892219,
+  "ArxIv": null,
+  "DBLP": "conf/coling/SunXYLYH20",
+  "ACL": "2020.coling-main.305",
+  "referencecount": 23,
+  "venue": "International Conference on Computational Linguistics",
+  "journal": {
+    "name": null,
+    "pages": "3436-3440",
+    "volume": null
+  },
+  "volume": null,
+  "pages": "3436-3440",
+  "name": null,
+  "isopenaccess": false,
+  "url": "https://www.semanticscholar.org/paper/3aba6c5f59080c24301121bfc3a1445fc292476b",
+  "fieldofstudy_source": "s2-fos-model",
+  "fieldofstudy_category": "Computer Science",
+  "rn": 1,
+  "explicit_gpu_hours": "None specified",
+  "estimated_gpu_hours": "None specified",
+  "number_gpu": "None specified",
+  "gpu_type": "None specified",
+  "training_details": "batch size is 8, learning rate is 2e-5, max sequence length is 128, number of the training epochs is 3",
+  "reasoning": "None specified",
+  "summary": "This paper presents the Mixup-Transformer, a novel model that incorporates the mixup data augmentation technique into transformer-based architectures for various NLP tasks. It addresses two primary questions: how to effectively apply mixup to text data, which cannot be mixed in raw format, and whether mixup can improve the performance of state-of-the-art transformer models like BERT. The mixup-transformer integrates a mixup layer into the transformer architecture, allowing for end-to-end training. Experiments on the GLUE benchmark demonstrate its effectiveness, especially in low-resource scenarios, resulting in significant performance improvements across multiple NLP tasks.",
+  "classification": "Application Paper",
+  "methods": "[\"Mixup\"]",
+  "results": "[\"Significant performance improvement on GLUE benchmark\", \"Particularly effective in low-resource scenarios\"]",
+  "models": "[\"BERT\"]",
+  "datasets": "[\"GLUE\", \"CoLA\", \"SST-2\", \"MRPC\", \"STS-B\", \"QQP\", \"MNLI\", \"QNLI\", \"RTE\"]",
+  "metrics": "[\"Accuracy\", \"Matthew's correlation\"]",
+  "limitations": "[\"Some tasks showed performance decrease when using mixup.\"]",
+  "train_row_index": 250578,
+  "stratum": "high_gt100"
+}

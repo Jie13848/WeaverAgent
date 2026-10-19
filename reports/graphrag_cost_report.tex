@@ -1,0 +1,319 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2cm]{geometry}
+\usepackage{ctex}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{siunitx}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\usepackage{enumitem}
+\usepackage{tabularx}
+\newcolumntype{R}{>{\raggedleft\arraybackslash}X}
+\definecolor{headerbg}{RGB}{32,86,152}
+\definecolor{rowalt}{RGB}{240,245,252}
+\definecolor{okgreen}{RGB}{34,139,34}
+\definecolor{warnorange}{RGB}{210,105,30}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small WeaverAgent / GraphRAG 构建成本报告}
+\fancyhead[R]{\small 2026-04-20}
+\fancyfoot[C]{\thepage}
+\renewcommand{\arraystretch}{1.25}
+\hypersetup{colorlinks=true, linkcolor=headerbg, urlcolor=headerbg}
+\title{\vspace{-1cm}\Huge\textbf{GraphRAG 多模型构建成本对比报告}\\[4pt]\large Token 消耗与经费明细（按模型 / 按构建）}
+\author{WeaverAgent 自动生成}
+\date{2026 年 04 月 20 日}
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+\begin{tcolorbox}[colback=rowalt, colframe=headerbg, title=\textbf{执行摘要}, breakable]
+\begin{itemize}[leftmargin=*]
+  \item 扫描的构建总数：\textbf{14}，其中成功产出实体表（entities.parquet）且含缓存的构建：\textbf{10}
+  \item 累计处理文档数：\textbf{54} 篇
+  \item 累计 LLM+Embedding token 消耗：\textbf{11{,}336{,}861} tokens
+  \item 累计美元成本：\textbf{\$9.5855}
+  \item 累计人民币成本：\textbf{¥18.5763}
+  \item 人民币等值总成本（汇率 6.82）：\textbf{¥83.95}
+\end{itemize}
+\end{tcolorbox}
+\section*{1. 成功构建总览}
+\noindent\begin{tabularx}{\textwidth}{@{}l X r r r r r@{}}
+\toprule
+\rowcolor{headerbg!10}\textbf{构建 ID} & \textbf{LLM 模型} & \textbf{文档} & \textbf{输入 tok} & \textbf{输出 tok} & \textbf{耗时(s)} & \textbf{成本(¥)} \\
+\midrule
+\rowcolor{rowalt}\texttt{\small a8d200294d3b} & \small gpt-4o-mini & 1 & 1{,}298{,}619 & 269{,}754 & - & ¥2.43 \\
+\texttt{\small 55f5bb2516d2} & \small gpt-4o & 2 & 1{,}939{,}415 & 335{,}486 & - & ¥55.47 \\
+\rowcolor{rowalt}\texttt{\small 7d9de8b6f876} & \small gpt-5-mini & 10 & 563{,}094 & 207{,}528 & - & ¥3.77 \\
+\texttt{\small bae3c7c26ca1} & \small qwen3.5-plus & 5 & 1{,}531{,}023 & 333{,}209 & 987 & ¥7.06 \\
+\rowcolor{rowalt}\texttt{\small 1bc04e752fb9} & \small glm-5-turbo & 5 & 170{,}523 & 34{,}068 & 1378 & ¥1.58 \\
+\texttt{\small 47ddbb80f5f5} & \small glm-5-turbo & 10 & 407{,}506 & 92{,}544 & 3022 & ¥4.05 \\
+\rowcolor{rowalt}\texttt{\small fc867e05c308} & \small kimi-k2-turbo-preview & 5 & 1{,}088{,}807 & 95{,}239 & 3060 & ¥5.88 \\
+\texttt{\small 0bb60bf501f1} & \small gpt-4o-mini & 5 & 1{,}105{,}386 & 65{,}803 & 446 & ¥1.38 \\
+\rowcolor{rowalt}\texttt{\small ac1de00fd368} & \small gpt-4o-mini & 1 & 1{,}152{,}296 & 78{,}673 & - & ¥1.48 \\
+\texttt{\small d8c85f6284c4} & \small gpt-4o-mini & 10 & 481{,}410 & 86{,}478 & - & ¥0.83 \\
+\midrule
+\rowcolor{headerbg!15}\textbf{合计（10 次）} & -- & \textbf{54} & \textbf{9{,}738{,}079} & \textbf{1{,}598{,}782} & -- & \textbf{¥83.95} \\
+\bottomrule
+\end{tabularx}
+\vspace{0.1cm}\noindent{\small 注：所有成功构建按完成时间排序；成本栏为等值人民币（\$1 $\approx$ ¥6.82）。}
+\section*{2. 按 LLM 模型聚合}
+\noindent\begin{tabularx}{\textwidth}{@{}X l r r r r r@{}}
+\toprule
+\rowcolor{headerbg!10}\textbf{LLM 模型} & \textbf{供应商} & \textbf{构建} & \textbf{文档} & \textbf{输入 tok} & \textbf{输出 tok} & \textbf{成本(¥)} \\
+\midrule
+\rowcolor{rowalt}\small gpt-4o & \small OpenAI & 1 & 2 & 1{,}939{,}415 & 335{,}486 & ¥55.47 \\
+\small qwen3.5-plus & \small 阿里 DashScope & 1 & 5 & 1{,}531{,}023 & 333{,}209 & ¥7.06 \\
+\rowcolor{rowalt}\small gpt-4o-mini & \small OpenAI & 4 & 17 & 4{,}037{,}711 & 500{,}708 & ¥6.13 \\
+\small kimi-k2-turbo-preview & \small Moonshot Kimi & 1 & 5 & 1{,}088{,}807 & 95{,}239 & ¥5.88 \\
+\rowcolor{rowalt}\small glm-5-turbo & \small 智谱 AI & 2 & 15 & 578{,}029 & 126{,}612 & ¥5.64 \\
+\small gpt-5-mini & \small OpenAI & 1 & 10 & 563{,}094 & 207{,}528 & ¥3.77 \\
+\bottomrule
+\end{tabularx}
+\vspace{0.1cm}\noindent{\small 按 LLM 主模型聚合（Embedding 不单列；相同模型的不同日期版本合并）。}
+\section*{3. 每次构建明细（按模型拆分）}
+\subsection*{3.1\;构建 weaveragent\_a8d200294d3b4da2}
+\noindent\begin{minipage}{\textwidth}
+\begin{tabular}{@{}ll@{}}
+\textbf{完成时间} & 2026-04-19 22:42 \\
+\textbf{文档数} & 1 \\
+\textbf{LLM 模型} & gpt-4o-mini \\
+\end{tabular}
+\end{minipage}
+\par\vspace{0.25cm}
+\noindent\begin{tabularx}{\textwidth}{@{}X r r r r r@{}}
+\toprule
+\rowcolor{headerbg!10}\textbf{模型} & \textbf{调用} & \textbf{输入 tok} & \textbf{输出 tok} & \textbf{合计 tok} & \textbf{成本} \\
+\midrule
+\rowcolor{rowalt}\texttt{\small gpt-4o-mini} & 785 & 1{,}298{,}619 & 269{,}754 & 1{,}568{,}373 & \$0.3566 \\
+\midrule
+\rowcolor{headerbg!15}\textbf{合计} & \textbf{785} & \textbf{1{,}298{,}619} & \textbf{269{,}754} & \textbf{1{,}568{,}373} & \textbf{\$0.3566 + $\approx$ ¥2.43} \\
+\bottomrule
+\end{tabularx}
+\vspace{0.5cm}
+\subsection*{3.2\;构建 weaveragent\_55f5bb2516d246f9}
+\noindent\begin{minipage}{\textwidth}
+\begin{tabular}{@{}ll@{}}
+\textbf{完成时间} & 2026-04-19 22:47 \\
+\textbf{文档数} & 2 \\
+\textbf{LLM 模型} & gpt-4o \\
+\textbf{Embedding 模型} & text-embedding-3-small \\
+\end{tabular}
+\end{minipage}
+\par\vspace{0.25cm}
+\noindent\begin{tabularx}{\textwidth}{@{}X r r r r r@{}}
+\toprule
+\rowcolor{headerbg!10}\textbf{模型} & \textbf{调用} & \textbf{输入 tok} & \textbf{输出 tok} & \textbf{合计 tok} & \textbf{成本} \\
+\midrule
+\rowcolor{rowalt}\texttt{\small gpt-4o} & 1{,}161 & 1{,}911{,}119 & 335{,}486 & 2{,}246{,}605 & \$8.1327 \\
+\texttt{\small text-embedding-3-small} & 24 & 28{,}296 & 0 & 28{,}296 & \$0.0006 \\
+\midrule
+\rowcolor{headerbg!15}\textbf{合计} & \textbf{1{,}185} & \textbf{1{,}939{,}415} & \textbf{335{,}486} & \textbf{2{,}274{,}901} & \textbf{\$8.1332 + $\approx$ ¥55.47} \\
+\bottomrule
+\end{tabularx}
+\vspace{0.5cm}
+\subsection*{3.3\;构建 weaveragent\_7d9de8b6f8764d78}
+\noindent\begin{minipage}{\textwidth}
+\begin{tabular}{@{}ll@{}}
+\textbf{完成时间} & 2026-04-20 00:58 \\
+\textbf{文档数} & 10 \\
+\textbf{LLM 模型} & gpt-5-mini \\
+\textbf{Embedding 模型} & text-embedding-3-small \\
+\end{tabular}
+\end{minipage}
+\par\vspace{0.25cm}
+\noindent\begin{tabularx}{\textwidth}{@{}X r r r r r@{}}
+\toprule
+\rowcolor{headerbg!10}\textbf{模型} & \textbf{调用} & \textbf{输入 tok} & \textbf{输出 tok} & \textbf{合计 tok} & \textbf{成本} \\
+\midrule
+\rowcolor{rowalt}\texttt{\small gpt-5-mini} & 333 & 552{,}577 & 207{,}528 & 760{,}105 & \$0.5532 \\
+\texttt{\small text-embedding-3-small} & 10 & 10{,}517 & 0 & 10{,}517 & \$0.0002 \\
+\midrule
+\rowcolor{headerbg!15}\textbf{合计} & \textbf{343} & \textbf{563{,}094} & \textbf{207{,}528} & \textbf{770{,}622} & \textbf{\$0.5534 + $\approx$ ¥3.77} \\
+\bottomrule
+\end{tabularx}
+\vspace{0.5cm}
+\subsection*{3.4\;构建 weaveragent\_bae3c7c26ca14ea9}
+\noindent\begin{minipage}{\textwidth}
+\begin{tabular}{@{}ll@{}}
+\textbf{完成时间} & 2026-04-20 02:42 \\
+\textbf{文档数} & 5 \\
+\textbf{总耗时} & 987.5\,s（约 16.5\,分钟） \\
+\textbf{LLM 模型} & qwen3.5-plus \\
+\end{tabular}
+\end{minipage}
+\par\vspace{0.25cm}
+\noindent\begin{tabularx}{\textwidth}{@{}X r r r r r@{}}
+\toprule
+\rowcolor{headerbg!10}\textbf{模型} & \textbf{调用} & \textbf{输入 tok} & \textbf{输出 tok} & \textbf{合计 tok} & \textbf{成本} \\
+\midrule
+\rowcolor{rowalt}\texttt{\small qwen3.5-plus} & 1{,}185 & 1{,}531{,}023 & 333{,}209 & 1{,}864{,}232 & ¥7.0606 \\
+\midrule
+\rowcolor{headerbg!15}\textbf{合计} & \textbf{1{,}185} & \textbf{1{,}531{,}023} & \textbf{333{,}209} & \textbf{1{,}864{,}232} & \textbf{¥7.0606 + $\approx$ ¥7.06} \\
+\bottomrule
+\end{tabularx}
+\vspace{0.5cm}
+\subsection*{3.5\;构建 weaveragent\_1bc04e752fb940d3}
+\noindent\begin{minipage}{\textwidth}
+\begin{tabular}{@{}ll@{}}
+\textbf{完成时间} & 2026-04-20 02:42 \\
+\textbf{文档数} & 5 \\
+\textbf{总耗时} & 1378.2\,s（约 23.0\,分钟） \\
+\textbf{LLM 模型} & glm-5-turbo \\
+\textbf{Embedding 模型} & embedding-3 \\
+\end{tabular}
+\end{minipage}
+\par\vspace{0.25cm}
+\noindent\begin{tabularx}{\textwidth}{@{}X r r r r r@{}}
+\toprule
+\rowcolor{headerbg!10}\textbf{模型} & \textbf{调用} & \textbf{输入 tok} & \textbf{输出 tok} & \textbf{合计 tok} & \textbf{成本} \\
+\midrule
+\rowcolor{rowalt}\texttt{\small glm-5-turbo} & 137 & 166{,}121 & 34{,}068 & 200{,}189 & ¥1.5801 \\
+\texttt{\small embedding-3} & 5 & 4{,}402 & 0 & 4{,}402 & ¥0.0022 \\
+\midrule
+\rowcolor{headerbg!15}\textbf{合计} & \textbf{142} & \textbf{170{,}523} & \textbf{34{,}068} & \textbf{204{,}591} & \textbf{¥1.5823 + $\approx$ ¥1.58} \\
+\bottomrule
+\end{tabularx}
+\vspace{0.5cm}
+\subsection*{3.6\;构建 weaveragent\_47ddbb80f5f546dd}
+\noindent\begin{minipage}{\textwidth}
+\begin{tabular}{@{}ll@{}}
+\textbf{完成时间} & 2026-04-20 02:42 \\
+\textbf{文档数} & 10 \\
+\textbf{总耗时} & 3022.3\,s（约 50.4\,分钟） \\
+\textbf{LLM 模型} & glm-5-turbo \\
+\textbf{Embedding 模型} & embedding-3 \\
+\end{tabular}
+\end{minipage}
+\par\vspace{0.25cm}
+\noindent\begin{tabularx}{\textwidth}{@{}X r r r r r@{}}
+\toprule
+\rowcolor{headerbg!10}\textbf{模型} & \textbf{调用} & \textbf{输入 tok} & \textbf{输出 tok} & \textbf{合计 tok} & \textbf{成本} \\
+\midrule
+\rowcolor{rowalt}\texttt{\small glm-5-turbo} & 324 & 403{,}269 & 92{,}544 & 495{,}813 & ¥4.0523 \\
+\texttt{\small embedding-3} & 5 & 4{,}237 & 0 & 4{,}237 & ¥0.0021 \\
+\midrule
+\rowcolor{headerbg!15}\textbf{合计} & \textbf{329} & \textbf{407{,}506} & \textbf{92{,}544} & \textbf{500{,}050} & \textbf{¥4.0544 + $\approx$ ¥4.05} \\
+\bottomrule
+\end{tabularx}
+\vspace{0.5cm}
+\subsection*{3.7\;构建 weaveragent\_fc867e05c30848f0}
+\noindent\begin{minipage}{\textwidth}
+\begin{tabular}{@{}ll@{}}
+\textbf{完成时间} & 2026-04-20 02:42 \\
+\textbf{文档数} & 5 \\
+\textbf{总耗时} & 3060.3\,s（约 51.0\,分钟） \\
+\textbf{LLM 模型} & kimi-k2-turbo-preview \\
+\end{tabular}
+\end{minipage}
+\par\vspace{0.25cm}
+\noindent\begin{tabularx}{\textwidth}{@{}X r r r r r@{}}
+\toprule
+\rowcolor{headerbg!10}\textbf{模型} & \textbf{调用} & \textbf{输入 tok} & \textbf{输出 tok} & \textbf{合计 tok} & \textbf{成本} \\
+\midrule
+\rowcolor{rowalt}\texttt{\small kimi-k2-turbo-preview} & 1{,}009 & 1{,}088{,}807 & 95{,}239 & 1{,}184{,}046 & ¥5.8791 \\
+\midrule
+\rowcolor{headerbg!15}\textbf{合计} & \textbf{1{,}009} & \textbf{1{,}088{,}807} & \textbf{95{,}239} & \textbf{1{,}184{,}046} & \textbf{¥5.8791 + $\approx$ ¥5.88} \\
+\bottomrule
+\end{tabularx}
+\vspace{0.5cm}
+\subsection*{3.8\;构建 weaveragent\_0bb60bf501f14900}
+\noindent\begin{minipage}{\textwidth}
+\begin{tabular}{@{}ll@{}}
+\textbf{完成时间} & 2026-04-20 02:42 \\
+\textbf{文档数} & 5 \\
+\textbf{总耗时} & 446.4\,s（约 7.4\,分钟） \\
+\textbf{LLM 模型} & gpt-4o-mini \\
+\textbf{Embedding 模型} & text-embedding-3-small \\
+\end{tabular}
+\end{minipage}
+\par\vspace{0.25cm}
+\noindent\begin{tabularx}{\textwidth}{@{}X r r r r r@{}}
+\toprule
+\rowcolor{headerbg!10}\textbf{模型} & \textbf{调用} & \textbf{输入 tok} & \textbf{输出 tok} & \textbf{合计 tok} & \textbf{成本} \\
+\midrule
+\rowcolor{rowalt}\texttt{\small gpt-4o-mini} & 916 & 1{,}085{,}617 & 65{,}803 & 1{,}151{,}420 & \$0.2023 \\
+\texttt{\small text-embedding-3-small} & 23 & 19{,}769 & 0 & 19{,}769 & \$0.0004 \\
+\midrule
+\rowcolor{headerbg!15}\textbf{合计} & \textbf{939} & \textbf{1{,}105{,}386} & \textbf{65{,}803} & \textbf{1{,}171{,}189} & \textbf{\$0.2027 + $\approx$ ¥1.38} \\
+\bottomrule
+\end{tabularx}
+\vspace{0.5cm}
+\subsection*{3.9\;构建 weaveragent\_ac1de00fd3684c35}
+\noindent\begin{minipage}{\textwidth}
+\begin{tabular}{@{}ll@{}}
+\textbf{完成时间} & 2026-04-20 04:35 \\
+\textbf{文档数} & 1 \\
+\textbf{LLM 模型} & gpt-4o-mini \\
+\textbf{Embedding 模型} & text-embedding-3-small \\
+\end{tabular}
+\end{minipage}
+\par\vspace{0.25cm}
+\noindent\begin{tabularx}{\textwidth}{@{}X r r r r r@{}}
+\toprule
+\rowcolor{headerbg!10}\textbf{模型} & \textbf{调用} & \textbf{输入 tok} & \textbf{输出 tok} & \textbf{合计 tok} & \textbf{成本} \\
+\midrule
+\rowcolor{rowalt}\texttt{\small gpt-4o-mini} & 926 & 1{,}132{,}580 & 78{,}673 & 1{,}211{,}253 & \$0.2171 \\
+\texttt{\small text-embedding-3-small} & 25 & 19{,}716 & 0 & 19{,}716 & \$0.0004 \\
+\midrule
+\rowcolor{headerbg!15}\textbf{合计} & \textbf{951} & \textbf{1{,}152{,}296} & \textbf{78{,}673} & \textbf{1{,}230{,}969} & \textbf{\$0.2175 + $\approx$ ¥1.48} \\
+\bottomrule
+\end{tabularx}
+\vspace{0.5cm}
+\subsection*{3.10\;构建 weaveragent\_d8c85f6284c440fe}
+\noindent\begin{minipage}{\textwidth}
+\begin{tabular}{@{}ll@{}}
+\textbf{完成时间} & 2026-04-20 17:19 \\
+\textbf{文档数} & 10 \\
+\textbf{LLM 模型} & gpt-4o-mini \\
+\textbf{Embedding 模型} & text-embedding-3-small \\
+\end{tabular}
+\end{minipage}
+\par\vspace{0.25cm}
+\noindent\begin{tabularx}{\textwidth}{@{}X r r r r r@{}}
+\toprule
+\rowcolor{headerbg!10}\textbf{模型} & \textbf{调用} & \textbf{输入 tok} & \textbf{输出 tok} & \textbf{合计 tok} & \textbf{成本} \\
+\midrule
+\rowcolor{rowalt}\texttt{\small gpt-4o-mini} & 275 & 465{,}402 & 86{,}478 & 551{,}880 & \$0.1217 \\
+\texttt{\small text-embedding-3-small} & 17 & 16{,}008 & 0 & 16{,}008 & \$0.0003 \\
+\midrule
+\rowcolor{headerbg!15}\textbf{合计} & \textbf{292} & \textbf{481{,}410} & \textbf{86{,}478} & \textbf{567{,}888} & \textbf{\$0.1220 + $\approx$ ¥0.83} \\
+\bottomrule
+\end{tabularx}
+\vspace{0.5cm}
+\section*{4. 定价参考}
+\small
+下表为本报告使用的单价（per 1K tokens）：
+\begin{longtable}{@{}l l r r l@{}}
+\toprule
+\textbf{模型} & \textbf{供应商} & \textbf{输入单价} & \textbf{输出单价} & \textbf{货币} \\
+\midrule
+embedding-3 & 智谱 AI & ¥0.0005 & ¥0 & CNY \\
+glm-5-turbo & 智谱 AI & ¥0.005 & ¥0.022 & CNY \\
+gpt-4o & OpenAI & \$0.0025 & \$0.01 & USD \\
+gpt-4o-mini & OpenAI & \$0.00015 & \$0.0006 & USD \\
+gpt-5-mini & OpenAI & \$0.00025 & \$0.002 & USD \\
+kimi-k2-turbo-preview & Moonshot Kimi & ¥0.004 & ¥0.016 & CNY \\
+qwen3.5-plus & 阿里 DashScope & ¥0.002 & ¥0.012 & CNY \\
+text-embedding-3-small & OpenAI & \$2e-05 & \$0 & USD \\
+\bottomrule
+\end{longtable}
+\normalsize
+\section*{5. 观察与建议}
+\begin{itemize}[leftmargin=*]
+  \item 在较大规模构建（$\geq$ 5 文档）场景下，最便宜的配置是 \textbf{gpt-4o-mini-2024-07-18}（¥0.0832/文档），最贵的是 \textbf{qwen3.5-plus}（¥1.4121/文档），差距约 \textbf{17.0×}。
+  \item \textbf{gpt-4o-mini}：当前性价比最高的 OpenAI 选项（\$0.15/\$0.60 per M），本批次 5 篇文档的构建约 ¥1.4，适合批量索引。
+  \item \textbf{glm-5-turbo}：国产替代选项（¥5/¥22 per M），单价约为 gpt-4o-mini 的 5×，属中低成本区间；如网络策略不便直连 OpenAI，可用作降级方案（已启用 thinking=disabled 关闭思考）。
+  \item \textbf{gpt-5-mini}：已切换到 reasoning\_effort=minimal（构建场景）/ low（对话），成本显著低于默认 medium 档，但比 gpt-4o-mini 仍略贵。
+  \item \textbf{gpt-4o}：质量最佳但单价约为 gpt-4o-mini 的 \textbf{16.7×}（\$2.50/\$10.00 vs \$0.15/\$0.60 per M），\textcolor{warnorange}{不推荐用于批量索引}，仅建议用于最终报告生成或难例重试。
+  \item Embedding 成本占比极小（通常 $<$1\%），切换 embedding 模型对总账影响有限，主要决策应集中在 LLM 选择上。
+\end{itemize}
+\vfill
+\begin{center}\small\textcolor{gray}{本报告由 graphrag\_data 目录自动扫描生成。定价为公开官方价，实际账单以供应商后台为准。}\end{center}
+\end{document}

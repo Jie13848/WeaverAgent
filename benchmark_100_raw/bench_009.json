@@ -1,0 +1,400 @@
+{
+  "corpus_id": 202621357,
+  "parsed_title": "Justifying Recommendations using Distantly-Labeled Reviews and Fine-Grained Aspects",
+  "parsed_authors": [
+    "Jianmo Ni \nUniversity of California\nSan Diego",
+    "Jiacheng Li j9li@ucsd.edu \nUniversity of California\nSan Diego",
+    "Julian Mcauley jmcauley@ucsd.edu \nUniversity of California\nSan Diego"
+  ],
+  "abstract": "Several recent works have considered the problem of generating reviews (or 'tips') as a form of explanation as to why a recommendation might match a user's interests. While promising, we demonstrate that existing approaches struggle (in terms of both quality and content) to generate justifications that are relevant to users' decision-making process. We seek to introduce new datasets and methods to address this recommendation justification task. In terms of data, we first propose an 'extractive' approach to identify review segments which justify users' intentions; this approach is then used to distantly label massive review corpora and construct largescale personalized recommendation justification datasets. In terms of generation, we design two personalized generation models with this data: (1) a reference-based Seq2Seq model with aspect-planning which can generate justifications covering different aspects, and (2) an aspect-conditional masked language model which can generate diverse justifications based on templates extracted from justification histories. We conduct experiments on two real-world datasets which show that our model is capable of generating convincing and diverse justifications.",
+  "sections": [
+    {
+      "content": "Explaining, or justifying, recommendations to users has the potential to increase their transparency and reliability. However providing meaningful interpretations remains a difficult task, partly due to the black-box nature of many recommendation models, but also because we simply lack ground-truth datasets specifying what 'good' justifications ought to look like.\nPrevious work has sought to learn user preferences and writing styles from crowd-sourced reviews (Dong et al., 2017;Ni and McAuley, 2018)",
+      "title": "Introduction"
+    },
+    {
+      "content": "The food portions were huge. Plain cheese quesadilla is very good and very cheap. Table 1: In contrast to reviews and tips, we seek to automatically generate recommendation justifications that are more concise, concrete, and helpful for decision making. Examples of justifications from reviews, tips, and our annotated dataset are marked in bold.\nto generate explanations in the form of natural language, e.g. generating synthesized reviews similar to those that users would write about a product. However, a large portion of review text (or text from 'tips') is often of little relevance to most users' decision making (e.g. they describe verbose experiences or general endorsements) and may not be appropriate to use as explanations in terms of content and language style. As a result, existing models that learn directly from reviews (or tips) may not capture crucial information that explains users' purchases. Table 1 shows examples of reviews, tips and ideal justifications. More recently, there has been work studying the task of tip generation where tips are concise summaries of reviews . Though tips are concise and some subset of them might be suitable as candidates for recommendation justifications, only a few ecommerce systems provide tips accompanied with reviews. Even in systems where tips are available, the number of tips is usually far smaller than the number of reviews. These approaches hence suffer from generalizability issues, especially in settings where user interactions are highly sparse.\nOn the other hand, generating diverse responses is essential in personalized content generation scenarios such as justification generation. Instead of always predicting the most popular reasons, it's preferable to present diverse justifications for different users based on their personal interests. Recent work has shown that incorporating prior knowledge into generation frameworks can greatly improve diversity. Prior knowledge could include story-lines in story generation (Yao et al., 2019), or historical responses in dialogue systems (Weston et al., 2018).\nIn this work, our goal is to generate convincing and diverse justifications. To address the challenge of lacking ground-truth data about 'good' justifications, we propose a pipeline that can identify justifications from massive corpora of reviews or tips. We extract fine-grained aspects from justifications and build user personas and item profiles consisting of sets of representative aspects. To improve generation quality and diversity, we propose two generation models (1) a reference-based Seq2Seq model with aspect-planning, which takes previous justifications as a reference and can produce justifications based on different aspects, and (2) an aspect-conditional masked language model that can generate diverse justifications from templates extracted from previous justifications.\nOur contributions are threefold:\n• To facilitate recommendation justification generation, we propose a pipeline to identify justification candidates and build aspect-based user personas and item profiles from massive corpora of reviews. With this approach, we are able to build large-scale personalized justification datasets. We use these extractive justification segments in the task of explainable recommendation and show that these are better training sources instead of whole reviews. • We propose two models based on reference attention, aspect-planning techniques and a persona-conditional masked language model. We show that adding such personalized information enables the models to generate justifications with high quality and diversity. • We conduct extensive experiments on two realworld datasets from Yelp and Amazon Clothing.\nWe provide an annotated dataset about 'good' justifications on the Yelp dataset and show that the binary classifier trained on this dataset gener-alizes well to the Amazon Clothing dataset. We study different decoding strategies and compare their effect on generation performance.",
+      "title": "Justification examples:"
+    },
+    {
+      "content": "In this section, we introduce the pipeline to extract high quality justifications from raw user reviews. Specifically, our goal here is to identify review segments that can be used as justifications and build a personalized justification dataset upon them. Our pipeline consists of three steps: 1. Annotating a set of review segments with binary labels, i.e., to determine whether they are 'good' or 'bad' justifications. 2. Training a classifier on the annotated subset and applying it to distantly label all the review segments to extract 'good' justifications for each user and item pair. 3. Applying fine-grained aspect extraction for the extracted justifications, and building user personas and item profiles.",
+      "title": "Dataset Generation"
+    },
+    {
+      "content": "The first step is to extract text segments from reviews that are appropriate to use as justifications.\nInstead of a complete sentence or phrase, we define each segment as an Elementary Discourse Unit (EDU; (Mann and Thompson, 1988)) which corresponds to a sequence of clauses. We use the model of  to obtain EDUs from reviews. Recent works have shown that EDUs can improve the performance of document-level summarization (Bhatia et al., 2015) and opinion summarizaiton (Angelidis and Lapata, 2018). After preprocessing the reviews into EDUs, we analyzed the linguistic differences between recommendation justifications and reviews, and built two rules to filter the segments that are unlikely to be suitable justifications: (1) segments with first-person or third-person pronouns, and (2) too long or short. Next, two expert annotators were exposed to 1,000 segments among those not filtered out and asked to determine whether they are 'good' justifications. Labeling was performed iteratively, followed by feedback and discussion, until the quality was aligned between the two annotators. At the end of the process, the interannotator agreement for the binary labeling task (good vs. bad), measured by Cohen's kappa (Cohen, 1960), was 0.927 after alignment. Then, the annotators further labeled 600 segments. Overall,  24.8% of the segments were labeled good.",
+      "title": "Identifying Justifications From Reviews"
+    },
+    {
+      "content": "Our next step is to propagate labels to the complete review corpus. Here we adopt BERT (Devlin et al., 2019) to fine-tune on our classification task, where a [CLS] token is added to the beginning of each segment and the final hidden state (i.e., output of BERT) corresponding to this token is fed into a linear layer to obtain the binary prediction. Cross entropy is used as the training loss. We split the annotated dataset into Train, Dev, and Test sets with a 0.8/0.1/0.1 ratio, fine-tune the BERT classifier on the Train set and choose the best model on the Dev set. After three epochs of fine-tuning, BERT can achieve an F1-score of 0.80 on the Test set. We compare the performance of BERT with multiple baseline models: (1) a XGBoost model which uses Bags-of-Words as sentence features (2) a convolutional neural network (CNN) with three convolution layers and one linear layer (3) a long short-term memory (LSTM) (Hochreiter and Schmidhuber, 1997) network with a max-pooling layer, and a linear layer (4) a BERT sentiment classifier (BERT-SA) trained on the complete Yelp dataset for one epoch and three epochs. To obtain the pre-trained word embeddings for the CNN and LSTM models, we applied fastText (Bojanowski et al., 2016) on the Yelp Review dataset. We set the embedding dimension to 200 and used default values for other hyper-parameters. Table 2 presents results for our binary classification task. The BERT classifier has higher F1-score and precision than other classifiers. The BERT-SA model after three epochs only achieves an F1score of 0.491, which confirms the difference between sentiment analysis and our good/bad task, i.e., even if the segment has positive sentiment, it might be not suitable as a justification.",
+      "title": "Automatic Classification"
+    },
+    {
+      "content": "The Tuna is pretty amazing Appetizers and pasta are excellent here An excellent selection of both sweet and savory crepes It was filled with delicious food, fantastic music and dancing",
+      "title": "Yelp"
+    },
+    {
+      "content": "The quality of the material is great Great shirt, especially for the price. The seams and stitching are really nice Fit the bill for a Halloween costume. Table 3: Examples of justifications with fine-grained aspects in our annotated dataset. The fine-grained aspects are italic and underlined.",
+      "title": "Amazon-Cloth"
+    },
+    {
+      "content": "Finally, we extract the fine-grained aspects that each justification covers. Fine-grained aspects are properties of products that appear among a user's opinions. We adopt the method proposed by Zhang et al. (2014) to build a sentiment lexicon which includes a set of fine-grained aspects from the whole dataset. We then use simple rules to determine which aspects appear in each justification. 1 Table 3 presents a set of examples from our dataset. Each example consists of a justification that a user has written about an item, and multiple fine-grained aspects mentioned in the justification. Note that we only annotated the Yelp dataset, trained a classifer on that and applied the model on both Yelp and Amazon Clothing dataset. As shown in Table 3, the trained classifier works well on both datasets.",
+      "title": "Fine-grained Aspect Extraction"
+    },
+    {
+      "content": "",
+      "title": "Approach"
+    },
+    {
+      "content": "For each user u (or item i), we build a justification reference D = {d 1 , . . . , d lr } consisting of justifications that the user has written (or justifications about the item) on the training set, where l r is the maximum number of justifications. We also obtain a user persona (or item profile) A = {a 1 , . . . , a K } based on the fine-grained aspects that the user's (or item's) previous justifications have covered, where K is the maximum number of aspects.\nGiven a user u and an item i, as well as the their justification reference D u and D i , and u's persona A u and i's profile A i , our target is to predict the  Figure 1: Structure of the reference-based Seq2Seq model with Aspect Planning justifications J u,i = {w 1 , w 2 , . . . , w T } that would explain why item i fits user u's interests, where T is the length of the justification.",
+      "title": "Problem Definition"
+    },
+    {
+      "content": "Our base model follows the structure of a standard Seq2Seq (Sutskever et al., 2014) model. Our framework, called 'Ref2Seq', views the historical justifications of users and items as references and learns latent personalized features from them. Figure 1 shows the structure of our Reference-based Seq2Seq Model. It includes two components: (1) two sequence encoders that learn user and item latent representations by taking previous justifications as references; (2) a sequence decoder incorporating representations from users and items to generate personalized justifications.\nSequence Encoders. Our user encoder and sequence encoder share the same structure, which includes an embedding layer, a two-layer bidirectional GRU (Cho et al., 2014), and a projection layer. The inputs are a user (or item) reference D consisting of a set of historical justifications. These justifications pass a word embedding layer, then go through the GRU and yield a sequence of hidden states e ∈ R ls×lr×n :\nwhere l s denotes the length of the sequence, n is the hidden size of the encoder GRU, E ∈ R ls×lr×n is the embedded sequence representation, and → e and ← e are the hidden vectors produced by a forward and a backward GRU (respectively).\nTo combine information from different 'references' (i.e. justifications), the hidden states are then projected via a linear layer:\nwhereê ∈ R ls×n is the final output of the encoder, and W e ∈ R lr , b e ∈ R are learned parameters. Sequence decoder. The decoder is a two-layer GRU that predicts the target words given a start token. The hidden state of the decoder is initialized using the sum of the last hidden state of the user and item encoders. The hidden state at time-step t is updated via the GRU unit based on the previous hidden state and the input word. Specifically:\nwhere e u ls and e i ls are the last hidden states of the user and item encoder outputê u andê i .\nTo explore the relation between the reference and generation, we apply an attention fusion layer to summarize the output of each encoder. For the user and item reference encoder, the attention vector is defined as:\nwhere a 1 t ∈ R n is an attention vector on the sequence encoder at time-step t, α 1 tj is an attention score over the encoder hidden state e j and decoder hidden state h t , and Z is a normalization term.\nAspect-Planning Generation. One of the challenges for generating justifications is how to improve controllability, i.e., directly manipulate the content being generated. Inspired by 'plan-andwrite' (Yao et al., 2019), we extend the base model to an Aspect-Planning Ref2Seq (AP-Ref2Seq) model where we plan a fine-grained aspect before generation. This aspect planning can be considered as an extra form of supervision instead of a hard constraint to make justification generation more controllable.\nWhen generating the justification for user u and item i, we first provide a fine-grained aspect a as a plan. The aspect a is fed into the word embedding layer to obtain the aspect embedding E a . Then, we compute the scores between the embedding of the aspect and the decoder hidden state as:\nwhere a 2 t ∈ R n is an attention vector and α 2 t is an attention score.\nThe attention vectors a 1 ut of user u, a 1 it of item i, and a 2 t of fine-grained aspect a, are concatenated with the decoder hidden state at time-step t and projected to obtain the output word distribution P . The output probability for word w at time-step t is given by:\nwhere w t is the target word at time-step t. Given the probability p(w t ) at each time step t, the model is trained using a cross-entropy loss compared against the ground-truth sequence.",
+      "title": "Reference-based Seq2Seq Model"
+    },
+    {
+      "content": "Though Seq2Seq-based models can achieve high quality output, they often fail to generate diverse content. Recent works in natural language generation (NLG) tried to combine generation methods with information retrieval techniques to increase the generation diversity Baheti et al., 2018). The basic idea follows the paradigm of retrieve-and-edit-which is to first retrieve historical responses as templates, and then edit the template into new content. Since our data is annotated with fine-grained aspects, it naturally fits into this type of retrieve-and-edit paradigm. Meanwhile, masked language models have shown great performance in language modeling. Recent work Mansimov et al., 2019) has shown that by sampling from the masked language model (e.g. BERT), it is able to generate coherent sentences. Inspired by this work, we want to extend such an approach into a conditional version-we explore the use of an Aspect Conditional Masked Language Model (ACMLM) to generate diverse personalized justifications. Figure 2 shows the structure of our Aspect Conditional Masked Language Model. For a justification J u,i that user u wrote about item i, we adapt the pre-trained BERT model (Devlin et al., 2019) into an encoderdecoder network with (1) an aspect encoder which encodes the user persona and item profile into latent representations and (2) a masked language model sequence decoder that takes in a masked justification and predicts the masked tokens.\nAspect Encoder. Our aspect encoder shares the same WordPiece embeddings (Wu et al., 2016) as BERT. The encoder feeds the intersection of fine-grained aspects from the user persona and item profile A ui = {a 1 , . . . , a K } into the embedding layer and obtains the aspect embedding A ui ∈ R K ×n , where K is the number of common fine-grained aspects and n is the dimension of the WordPiece embeddings.\nMasked Language Model Sequence Decoder. We use the masked language model in the pretrained BERT model as our sequence decoder and add attention over the aspect encoder's output. As shown in Figure 2, the input to the decoder is a masked justification J M u,i = {w 1 , . . . , w T } with multiple tokens be replaced as [MASK]. The decoder's output T ∈ R T ×n is then fed to the attention layer to calculate an attention score with the output of the encoder:\nThe attention vector a 3 t is then concatenated with the decoder hidden state at time-step t and sent to a linear projection layer to obtain the output word distribution P . The output probability for word w at time-step t is given by:\nwhere w t is the target word at time-step t. Masking Procedure. The original BERT paper applies a flat rate (15%) to decide whether to mask a token. Unlike their approach, we adopt a higher rate to mask fine-grained aspects since they are more important in justifications. Specifically, if we encounter a fine-grained aspect, we will replace it with a [MASK] token 30% of the time; while for other words, we will replace them with a [MASK] token 15% of the time.\nDuring training, the model will only predict those masked tokens and calculate a cross-entropy loss on them.  Generation by Sampling from Masked Templates. We next discuss how to generate justifications from the trained ACMLM. We follow the sampling strategy of  to generate justifications. Instead of generating from a sequence of all [MASK] tokens, we start with masked templates generated from historical justifications about the target item. These masked templates include prior knowledge about the item and can increase the speed of sampling convergence. Table 4 shows an example of the generation process. We initialize the template sequence X 0 as (universe, [MASK], . . . , ##ble) with length T . At each iteration i, a position t i is sampled uniformly at random from {1, . . . , T } and the token at t i (i.e. x i t i ) of the current sequence X i is replaced by [MASK]. After that, we obtain the conditional probability of x t i as\nwhere 1h(x t i ) is a one-hot vector with index x t i set to 1, X i \\t i is the sequence we obtain after replacing the token at position t i of X i by [MASK], f θ (X i \\t i ) is the output after feeding X i \\t i into the ACMLM as in Equation (8), and Z is the normalization term. We then samplex ti from Equation (9), and construct the next sequence by\n. After repeating this procedure N times, the final output is considered as the generation output. 2",
+      "title": "Aspect Conditional Masked Language Model"
+    },
+    {
+      "content": "",
+      "title": "Experiments"
+    },
+    {
+      "content": "With our proposed pipeline (Section 2), we construct two personalized justification datasets from existing review data-Yelp and Amazon Clothing. 34 We further filter those users with fewer than five justifications. For each user, we randomly hold out two samples from all of their justifications to construct the Dev and Test sets. Table 5 shows the statistics of our two datasets.",
+      "title": "Datasets"
+    },
+    {
+      "content": "For automatic evaluation, we consider three baselines: Item-Rand is a baseline which randomly chooses a justification from the item's historical justifications. LexRank is a strong unsupervised baseline that is widely used in text summarization (Erkan and Radev, 2004). Given all historical justifications about an item, LexRank can select one justification as the summary. We then use that as the justification for all users. Attr2Seq (Dong et al., 2017) is a Seq2Seq baseline that uses attributes (i.e. user and item identity) as input.\nBy default, all models use beam search during generation. Recently, there have been works showing that the generation output of sampling methods is more diverse and suitable on highentropy tasks (Holtzman et al., 2019). To this end, we explore another decoding strategy-'Top-k sampling' (Radford et al., 2019)    and include a variant of our model: Ref2Ref (Topk). 5 For human evaluation, we include two baselines: Ref2Seq (Review) and Ref2Seq (Tip), both of which are the same model as Ref2Seq model but trained on the original review and tip data, respectively. Comparisons with these two baselines demonstrates that training on our annotated dataset tends to generate text more suitable as justifications.",
+      "title": "Baselines"
+    },
+    {
+      "content": "We use PyTorch 6 to implement our models.\nFor Req2Seq and AP-Ref2Seq, we set the hidden size and word embedding size as 256. We apply a dropout rate of 0.5 for the encoder and 0.2 for the decoder. The size of the justification reference l r is set to 5 and the number of fine-grained aspects K in the user persona and item profile is set to 30. We train the model using Adam with learning rate 2e −4 and stop training either when it reaches 20 epochs or the perplexity does not improve (on the Dev set). For ACMLM, we build our model based on the BERT implementation from HuggingFace. 7 We initialize our decoder using the pre-trained 'Bert-base' model and set the max sequence length to 30. We train the model for 5 epochs using Adam with learning rate 2e −5 . For models using beam search, we set the beam size as 10. For models using 'top-k' sampling, we set 5 At each time step, the next word is sampled from the top k possible next tokens, according to their probabilities. 6 http://pytorch.org/docs/master/index.html 7 https://github.com/huggingface/pytorch-pretrained-BERT  k to 5. For ACMLM, we use a burn-in step equal to the length of the initial sequence. Our data and code are available online. 8",
+      "title": "Implementation Detail"
+    },
+    {
+      "content": "For automatic evaluation, we use BLEU, Distinct-1, and Distinct-2 (Li et al., 2015) to measure the performance of our model. As shown in Table 6, our reference-based models achieve the highest BLEU scores on both datasets except for BLEU-3 on Yelp. This confirms that Ref2Seq is able to capture user and item content to generate the most relevant content, compared with unpersonalized models such as LexRank and personalized models that do not leverage historical justifications such as Attr2Seq.\nOn the other hand, recent works have reported that models achieving higher diversity scores will have lower scores on overlap-based metrics (e.g. BLEU) for open-domain generation tasks (Baheti et al., 2018;Gao et al., 2018). We make a similar observation for our personalized justifi-  cation generation task. As shown in Table 6, both sampling-based methods Ref2Seq (Top-k) and ACMLM achieve higher Distinct-1 and Distinct-2, while their BLEU scores are lower than Seq2Seq based models using beam search. Therefore, we also perform human evaluation to validate the generation quality of our proposed methods.",
+      "title": "Automatic Evaluation"
+    },
+    {
+      "content": "We conduct human evaluation on three aspects:\n(1) Relevance measures whether the generated output contains information relevant to an item;\n(2) Informativeness measures whether the generated justification includes specific information that is helpful to users; and (3) Diversity measures how distinct the generated output is compared with other justifications. We focus on the Yelp dataset and sample 100 generated examples from each of the five models as shown in Table 7. Human annotators are asked to give a score in the range [1,5] (lowest to highest) for each metric. Each example is rated by at least three annotators. The results show that both Ref2Seq (Top-k) and ACMLM achieve higher scores on Diversity and Informativeness compared to other models.",
+      "title": "Human Evaluation"
+    },
+    {
+      "content": "Here we study the following two qualitative questions: RQ1: How do training data and methods affect generation? As Table 8 shows, models trained on reviews and tips tend to generate generic phrases (such as 'i love this place') which often do not include information that helps users to make de-",
+      "title": "Qualitative Analysis"
+    },
+    {
+      "content": "Aspects Generated Output\nYelp dining the dining room is nice pastry the pastries were pretty good chicken the chicken fried rice is the best sandwich the pulled pork sandwich is the best thing on the menu product great product , fast shippong Amazon-price design is nice , good price Clothing leather comfortable leather sneakers . classic walking sturdy , great city walking shoes Table 9: Generated justifications from AP-Ref2Seq. The planned aspects are randomly selected from users' personas.\ncisions. Other models trained on the justification datasets tend to mention concrete information (e.g. different aspects). LexRank tends to generate relevant but short content. Meanwhile, samplingbased models are able to generate more diverse content. RQ2: How does aspect planning affect generation? To mitigate the trade-off between diversity and relevance, one approach is to add more constraints during generation such as constrained Beam Search (Anderson et al., 2017). In our work, we extend our base model Ref2Seq by incorporating aspect-planning to guide generation. As shown in Table 9, most planned aspects are present in the generated outputs of AP-Req2Seq.",
+      "title": "Dataset"
+    },
+    {
+      "content": "Explainable Recommendation There has been a line of work that studies how to improve the explainability of recommender systems. Catherine and Cohen (2017) learn latent representations of review text to predict ratings. These representations are then used to find the most helpful reviews for given a particular user and item pair. Another popular direction is to generate text to justify recommendations. Dong et al. (2017) proposed an attribute-to-sequence model to generate product reviews which utilizes categorical attributes. Ni et al. (2017) developed a multi-task learning method that considers collaborative filter and review generation. Li et al. (2019b) generated tips by considering 'persona' information which can capture the language style of users and characteristics of items. However, these works use whole reviews or tips as training examples, which may not be appropriate due to the quality of review text. More recently, Liu et al. (2019) proposed a framework to generate fine-grained explanations for text classification. To achieve labels for human-readable explanations, they constructed a dataset from a website which provides ratings and fine-grained summaries written by users. Unfortunately, most websites do not provide such finegrained information. On the other hand, our work identifies justifications from reviews, uses them as training examples and shows these are better data source for explainable recommendation via extensive experiments.\nDiversity-aware NLG Diversity is an important aspect of NLG systems. Recent works have focused on digesting prior knowledge to improve generation diversity. Yao et al. (2019) proposed a method to incorporate planned story-lines in story generation. Li et al. (2019a) developed an aspectaware coarse-to-fine review generation method. They predict an aspect for each sentence in the review to capture the content flow. Given the aspects, a sequence of sentence sketches is generated and a decoder will fill in the slots of each sketch. In dialogue systems, several works have studied frameworks to extract templates from historical responses, which are then edited to form new responses (Weston et al., 2018;Wu et al., 2018). Similarly, the extract-and-edit paradigm has been studied in style transfer tasks in NLG .  proposed an attribute aware masked language model for nonparallel sentiment transfer. They first mask out the sentimental tokens and then train a masked language model to infill the masked positions for tar-get sentiment. In this work, we also introduces a conditional masked language model but considers more fine-grained aspects.",
+      "title": "Related Work"
+    },
+    {
+      "content": "In this work, we studied the problem of personalized justification generation. To build high quality justification datasets, we provided an annotated dataset and proposed a pipeline to extract justifications from massive review corpora. To generate convincing and diverse justifications, we developed two models: (1) Ref2Seq which leverages historical justifications as references during generation; and (2) ACMLM, which is an aspect conditional model built on a pre-trained masked language model. Our experiments showed that Ref2Seq achieves higher scores (in terms of BLEU) and ACMLM achieves higher diversity scores compared with baselines. Human evaluation showed that reference-based models obtain high relevance scores and sampling based methods led to more diverse and informative outputs. Finally, we showed that aspect-planning is a promising way to guide generation to produce personlized and relevant justifications.",
+      "title": "Conclusion"
+    },
+    {
+      "content": "",
+      "title": "Table 2 :"
+    },
+    {
+      "content": "",
+      "title": "Table 4 :"
+    },
+    {
+      "content": "",
+      "title": "Table 5 :"
+    },
+    {
+      "content": "",
+      "title": "Table 6 :"
+    },
+    {
+      "content": "",
+      "title": "Table 7 :"
+    },
+    {
+      "content": "",
+      "title": "Table 8 :"
+    }
+  ],
+  "figures": [
+    {
+      "caption": "Review examples: I love this little stand! The coconut mocha chiller and caramel macchiato are delicious. Wow what a special find. One of the most unique and special date nights my husband and I have had. Tip examples: Great food. Nice ambiance. Gnocchi were very good. I can't get enough of this place.",
+      "content": "Review examples: I love this little stand! The coconut mocha chiller and caramel macchiato are delicious. Wow what a special find. One of the most unique and special date nights my husband and I have had. Tip examples: Great food. Nice ambiance. Gnocchi were very good. I can't get enough of this place.",
+      "id": ""
+    },
+    {
+      "caption": "Performance for classifying review segments as good or bad for recommendation justification.",
+      "content": "Table 2 :\n2Performance for classifying review segments as good or bad for recommendation justification.",
+      "id": ""
+    },
+    {
+      "caption": "Examples of the generation output of ACMLM at different iterations.",
+      "content": "Table 4 :\n4Examples of the generation output of ACMLM at different iterations.",
+      "id": ""
+    },
+    {
+      "caption": "Statistics of our datasets.",
+      "content": "Table 5 :\n5Statistics of our datasets.Dataset \nYelp \nAmazon Clothing \n\nModel \nBLEU-3 BLEU-4 Distinct-1 Distinct-2 BLEU-3 BLEU-4 Distinct-1 Distinct-2 \nItem-Rand \n0.440 \n0.150 \n2.766 \n20.151 \n1.620 \n0.680 \n2.400 \n11.853 \nLexRank \n2.290 \n0.920 \n1.738 \n8.509 \n3.480 \n2.250 \n2.407 \n14.956 \nAttr2seq \n7.890 \n0.000 \n0.049 \n0.095 \n1.720 \n0.560 \n0.076 \n0.352 \nRef2Seq \n4.380 \n2.450 \n0.188 \n1.163 \n8.780 \n5.670 \n0.141 \n1.240 \nAP-Ref2Seq \n3.390 \n1.830 \n0.326 \n2.094 \n13.910 \n12.500 \n0.557 \n3.661 \nRef2Seq (Top-k) \n1.630 \n0.700 \n0.818 \n11.927 \n3.960 \n2.130 \n0.697 \n10.858 \nACMLM \n0.700 \n0.280 \n1.322 \n14.319 \n2.420 \n1.590 \n0.942 \n9.312",
+      "id": ""
+    },
+    {
+      "caption": "Performance on Automatic Evaluation.",
+      "content": "Table 6 :\n6Performance on Automatic Evaluation.",
+      "id": ""
+    },
+    {
+      "caption": "Comparisons of the generated justifications from different models for three businesses on the Yelp dataset.",
+      "content": "Table 7 :\n7Performance on Human Evaluation, where \nR,I,D represents Relevance, Informativeness and \nDiversity, respectively.",
+      "id": ""
+    }
+  ],
+  "references": [
+    {
+      "doi": "",
+      "text": "Guided open vocabulary image captioning with constrained beam search. Peter Anderson, Basura Fernando, Mark Johnson, Stephen Gould, EMNLP. Peter Anderson, Basura Fernando, Mark Johnson, and Stephen Gould. 2017. Guided open vocabulary im- age captioning with constrained beam search. In EMNLP."
+    },
+    {
+      "doi": "",
+      "text": "Summarizing opinions: Aspect extraction meets sentiment prediction and they are both weakly supervised. Stefanos Angelidis, Mirella Lapata, EMNLP. Stefanos Angelidis and Mirella Lapata. 2018. Summa- rizing opinions: Aspect extraction meets sentiment prediction and they are both weakly supervised. In EMNLP."
+    },
+    {
+      "doi": "",
+      "text": "Generating more interesting responses in neural conversation models with distributional constraints. Ashutosh Baheti, Alan Ritter, Jiwei Li, William B Dolan, EMNLP. Ashutosh Baheti, Alan Ritter, Jiwei Li, and William B. Dolan. 2018. Generating more interesting responses in neural conversation models with distributional constraints. In EMNLP."
+    },
+    {
+      "doi": "",
+      "text": "Better document-level sentiment analysis from rst discourse parsing. Parminder Bhatia, Yangfeng Ji, Jacob Eisenstein, EMNLP. Parminder Bhatia, Yangfeng Ji, and Jacob Eisenstein. 2015. Better document-level sentiment analysis from rst discourse parsing. In EMNLP."
+    },
+    {
+      "doi": "",
+      "text": "Enriching word vectors with subword information. Piotr Bojanowski, Edouard Grave, Armand Joulin, Tomas Mikolov, Transactions of the Association for Computational Linguistics. 5Piotr Bojanowski, Edouard Grave, Armand Joulin, and Tomas Mikolov. 2016. Enriching word vectors with subword information. Transactions of the Associa- tion for Computational Linguistics, 5:135-146."
+    },
+    {
+      "doi": "",
+      "text": "Transnets: Learning to transform for recommendation. Rose Catherine, William W Cohen, In RecSysRose Catherine and William W. Cohen. 2017. Transnets: Learning to transform for recommenda- tion. In RecSys."
+    },
+    {
+      "doi": "",
+      "text": "Learning phrase representations using rnn encoder-decoder for statistical machine translation. Kyunghyun Cho, Gülehre Bart Van Merrienboer, EMNLP. Fethi Bougares, Holger Schwenk, and Yoshua BengioKyunghyun Cho, Bart van Merrienboer, aglar Gülehre, Fethi Bougares, Holger Schwenk, and Yoshua Ben- gio. 2014. Learning phrase representations using rnn encoder-decoder for statistical machine transla- tion. In EMNLP."
+    },
+    {
+      "doi": "",
+      "text": "A coefficient of agreement for nominal scales. Jacob Willem Cohen, Jacob Willem Cohen. 1960. A coefficient of agreement for nominal scales."
+    },
+    {
+      "doi": "",
+      "text": "Bert: Pre-training of deep bidirectional transformers for language understanding. Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova, NAACL. Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova. 2019. Bert: Pre-training of deep bidirectional transformers for language understand- ing. In NAACL."
+    },
+    {
+      "doi": "",
+      "text": "Learning to generate product reviews from attributes. Li Dong, Shaohan Huang, Furu Wei, Mirella Lapata, Ming Zhou, Ke Xu, EACL. Li Dong, Shaohan Huang, Furu Wei, Mirella Lapata, Ming Zhou, and Ke Xu. 2017. Learning to generate product reviews from attributes. In EACL."
+    },
+    {
+      "doi": "",
+      "text": "Lexrank: Graph-based lexical centrality as salience in text summarization. Günes Erkan, Dragomir R Radev, J. Artif. Intell. Res. 22Günes Erkan and Dragomir R. Radev. 2004. Lexrank: Graph-based lexical centrality as salience in text summarization. J. Artif. Intell. Res., 22:457-479."
+    },
+    {
+      "doi": "",
+      "text": "Generating multiple diverse responses for short-text conversation. Jun Gao, Wei Bi, Xiaojiang Liu, Junhui Li, Shuming Shi, AAAI. Jun Gao, Wei Bi, Xiaojiang Liu, Junhui Li, and Shum- ing Shi. 2018. Generating multiple diverse re- sponses for short-text conversation. In AAAI."
+    },
+    {
+      "doi": "",
+      "text": "Long short-term memory. Sepp Hochreiter, Jürgen Schmidhuber, Neural Computation. 9Sepp Hochreiter and Jürgen Schmidhuber. 1997. Long short-term memory. Neural Computation, 9:1735- 1780."
+    },
+    {
+      "doi": "abs/1904.09751",
+      "text": "The curious case of neural text degeneration. Ari Holtzman, Jan Buys, Maxwell Forbes, Yejin Choi, abs/1904.09751CoRRAri Holtzman, Jan Buys, Maxwell Forbes, and Yejin Choi. 2019. The curious case of neural text degen- eration. CoRR, abs/1904.09751."
+    },
+    {
+      "doi": "",
+      "text": "A diversity-promoting objective function for neural conversation models. Jiwei Li, Michel Galley, Chris Brockett, Jianfeng Gao, William B Dolan, HLT-NAACL. Jiwei Li, Michel Galley, Chris Brockett, Jianfeng Gao, and William B. Dolan. 2015. A diversity-promoting objective function for neural conversation models. In HLT-NAACL."
+    },
+    {
+      "doi": "",
+      "text": "Delete, retrieve, generate: A simple approach to sentiment and style transfer. Juncen Li, Robin Jia, He He, Percy S Liang, NAACL-HLT. Juncen Li, Robin Jia, He He, and Percy S. Liang. 2018. Delete, retrieve, generate: A simple approach to sen- timent and style transfer. In NAACL-HLT."
+    },
+    {
+      "doi": "",
+      "text": "Generating long and informative reviews with aspect-aware coarse-to-fine decoding. Junyi Li, Wayne Xin Zhao, Ji-Rong Wen, Yang Song, ACL. Junyi Li, Wayne Xin Zhao, Ji-Rong Wen, and Yang Song. 2019a. Generating long and informative re- views with aspect-aware coarse-to-fine decoding. In ACL."
+    },
+    {
+      "doi": "",
+      "text": "Persona-aware tips generation. Piji Li, Zihao Wang, Lidong Bing, Wai Lam, WWWPiji Li, Zihao Wang, Lidong Bing, and Wai Lam. 2019b. Persona-aware tips generation. In WWW."
+    },
+    {
+      "doi": "",
+      "text": "Neural rating regression with abstractive tips generation for recommendation. Piji Li, Zihao Wang, Zhaochun Ren, Lidong Bing, Wai Lam, SI-GIRPiji Li, Zihao Wang, Zhaochun Ren, Lidong Bing, and Wai Lam. 2017. Neural rating regression with ab- stractive tips generation for recommendation. In SI- GIR."
+    },
+    {
+      "doi": "",
+      "text": "Towards explainable nlp: A generative explanation framework for text classification. Hui Liu, Qingyu Yin, William Yang Wang, ACL. Hui Liu, Qingyu Yin, and William Yang Wang. 2019. Towards explainable nlp: A generative explanation framework for text classification. In ACL."
+    },
+    {
+      "doi": "",
+      "text": "Rhetorical structure theory: toward a functional theory of text. C William, Sandra A Mann, Thompson, William C. Mann and Sandra A. Thompson. 1988. Rhetorical structure theory: toward a functional the- ory of text."
+    },
+    {
+      "doi": "abs/1905.12790",
+      "text": "A generalized framework of sequence generation with application to undirected sequence models. Elman Mansimov, Alex Wang, Kyunghyun Cho, abs/1905.12790ArXiv. Elman Mansimov, Alex Wang, and Kyunghyun Cho. 2019. A generalized framework of sequence genera- tion with application to undirected sequence models. ArXiv, abs/1905.12790."
+    },
+    {
+      "doi": "",
+      "text": "Estimating reactions and recommending products with generative models of reviews. Jianmo Ni, Zachary C Lipton, Sharad Vikram, Julian J Mcauley, IJCNLP. Jianmo Ni, Zachary C. Lipton, Sharad Vikram, and Ju- lian J. McAuley. 2017. Estimating reactions and rec- ommending products with generative models of re- views. In IJCNLP."
+    },
+    {
+      "doi": "",
+      "text": "Personalized review generation by expanding phrases and attending on aspect-aware representations. Jianmo Ni, Julian Mcauley, ACL. Jianmo Ni and Julian McAuley. 2018. Personalized re- view generation by expanding phrases and attending on aspect-aware representations. In ACL."
+    },
+    {
+      "doi": "",
+      "text": "Language models are unsupervised multitask learners. Alec Radford, Jeff Wu, Rewon Child, David Luan, Dario Amodei, Ilya Sutskever, Alec Radford, Jeff Wu, Rewon Child, David Luan, Dario Amodei, and Ilya Sutskever. 2019. Language models are unsupervised multitask learners."
+    },
+    {
+      "doi": "",
+      "text": "Sequence to sequence learning with neural networks. Ilya Sutskever, Oriol Vinyals, V Quoc, Le, NIPS. Ilya Sutskever, Oriol Vinyals, and Quoc V. Le. 2014. Sequence to sequence learning with neural net- works. In NIPS."
+    },
+    {
+      "doi": "abs/1902.04094",
+      "text": "Bert has a mouth, and it must speak: Bert as a markov random field language model. Alex Wang, Kyunghyun Cho, abs/1902.04094CoRRAlex Wang and Kyunghyun Cho. 2019. Bert has a mouth, and it must speak: Bert as a markov random field language model. CoRR, abs/1902.04094."
+    },
+    {
+      "doi": "",
+      "text": "Toward fast and accurate neural discourse segmentation. Yizhong Wang, Sujian Li, Jingfeng Yang, EMNLP. Yizhong Wang, Sujian Li, and Jingfeng Yang. 2018. Toward fast and accurate neural discourse segmen- tation. In EMNLP."
+    },
+    {
+      "doi": "",
+      "text": "Retrieve and refine: Improved sequence generation models for dialogue. Jason Weston, Emily Dinan, Alexander H Miller, SCAI@EMNLP. Jason Weston, Emily Dinan, and Alexander H. Miller. 2018. Retrieve and refine: Improved sequence gen- eration models for dialogue. In SCAI@EMNLP."
+    },
+    {
+      "doi": "",
+      "text": "Mask and infill: Applying masked language model to sentiment transfer. Xing Wu, Tao Zhang, Liangjun Zang, Jizhong Han, Songlin Hu, IJ-CAIXing Wu, Tao Zhang, Liangjun Zang, Jizhong Han, and Songlin Hu. 2019. Mask and infill: Applying masked language model to sentiment transfer. In IJ- CAI."
+    },
+    {
+      "doi": "abs/1609.08144",
+      "text": "Google's neural machine translation system: Bridging the gap between human and machine translation. Yonghui Wu, Mike Schuster, Zhifeng Chen, Quoc V Le, Mohammad Norouzi, Wolfgang Macherey, Maxim Krikun, Yuan Cao, Qin Gao, Jeff Klingner, Apurva Shah, Melvin Johnson, Xiaobing Liu, Lukasz Kaiser, Stephan Gouws, Yoshikiyo Kato, Taku Kudo, Hideto Kazawa, Keith Stevens, George Kurian, Nishant Patil, Wei Wang, abs/1609.08144Vinyals, Gregory S. Corrado, Macduff Hughes, and Jeffrey DeanCoRRCliff Young, Jason Smith, Jason Riesa, Alex RudnickYonghui Wu, Mike Schuster, Zhifeng Chen, Quoc V. Le, Mohammad Norouzi, Wolfgang Macherey, Maxim Krikun, Yuan Cao, Qin Gao, Jeff Klingner, Apurva Shah, Melvin Johnson, Xiaobing Liu, Lukasz Kaiser, Stephan Gouws, Yoshikiyo Kato, Taku Kudo, Hideto Kazawa, Keith Stevens, George Kurian, Nishant Patil, Wei Wang, Cliff Young, Jason Smith, Jason Riesa, Alex Rudnick, Oriol Vinyals, Gregory S. Corrado, Macduff Hughes, and Jeffrey Dean. 2016. Google's neural machine translation system: Bridging the gap between human and ma- chine translation. CoRR, abs/1609.08144."
+    },
+    {
+      "doi": "",
+      "text": "Response generation by context-aware prototype editing. Yu Wu, Furu Wei, Shaohan Huang, Yunli Wang, Zhoujun Li, Ming Zhou, AAAI. Yu Wu, Furu Wei, Shaohan Huang, Yunli Wang, Zhou- jun Li, and Ming Zhou. 2018. Response generation by context-aware prototype editing. In AAAI."
+    },
+    {
+      "doi": "",
+      "text": "Planand-write: Towards better automatic storytelling. Lili Yao, Nanyun Peng, Ralph Weischedel, Kevin Knight, Dongyan Zhao, Rui Yan, AAAI. Lili Yao, Nanyun Peng, Ralph Weischedel, Kevin Knight, Dongyan Zhao, and Rui Yan. 2019. Plan- and-write: Towards better automatic storytelling. In AAAI."
+    },
+    {
+      "doi": "",
+      "text": "Explicit factor models for explainable recommendation based on phrase-level sentiment analysis. Yongfeng Zhang, Guokun Lai, Min Zhang, Yi Zhang, Yiqun Liu, Shaoping Ma, SIGIR. Yongfeng Zhang, Guokun Lai, Min Zhang, Yi Zhang, Yiqun Liu, and Shaoping Ma. 2014. Explicit fac- tor models for explainable recommendation based on phrase-level sentiment analysis. In SIGIR."
+    }
+  ],
+  "parsed_external_ids": {
+    "acl": "D19-1018",
+    "arxiv": null,
+    "dblp": "conf/emnlp/NiLM19",
+    "doi": "10.18653/v1/d19-1018",
+    "mag": 2971196067.0,
+    "pubmed": null,
+    "pubmedcentral": null
+  },
+  "source": {
+    "open_access": {
+      "license": "CCBY",
+      "status": "HYBRID",
+      "url": "https://www.aclweb.org/anthology/D19-1018.pdf"
+    },
+    "pdf_sha": "64bc1595b2baefdb0b223c2ed3ff34c697ce5093",
+    "pdf_urls": [
+      "https://www.aclweb.org/anthology/D19-1018.pdf"
+    ]
+  },
+  "pdf_urls": [
+    "https://www.aclweb.org/anthology/D19-1018.pdf"
+  ],
+  "pdf_sha": "64bc1595b2baefdb0b223c2ed3ff34c697ce5093",
+  "open_access": {
+    "license": "CCBY",
+    "status": "HYBRID",
+    "url": "https://www.aclweb.org/anthology/D19-1018.pdf"
+  },
+  "license": "CCBY",
+  "open_access_url": "https://www.aclweb.org/anthology/D19-1018.pdf",
+  "open_access_status": "HYBRID",
+  "metadata_title": "Justifying Recommendations using Distantly-Labeled Reviews and Fine-Grained Aspects",
+  "metadata_authors": [
+    {
+      "authorId": 2148023.0,
+      "name": "Jianmo Ni"
+    },
+    {
+      "authorId": 97483167.0,
+      "name": "Jiacheng Li"
+    },
+    {
+      "authorId": 35660011.0,
+      "name": "Julian McAuley"
+    }
+  ],
+  "publicationdate": "2019-11-01",
+  "influentialcitationcount": 145,
+  "citationcount": 1332,
+  "year": 2019,
+  "publicationvenueid": "41bf9ed3-85b3-4c90-b015-150e31690253",
+  "publicationtypes": [
+    "JournalArticle",
+    "Conference",
+    "Review"
+  ],
+  "metadata_externalids": {
+    "ACL": "D19-1018",
+    "ArXiv": null,
+    "CorpusId": 202621357,
+    "DBLP": "conf/emnlp/NiLM19",
+    "DOI": "10.18653/v1/D19-1018",
+    "MAG": 2971196067.0,
+    "PubMed": null,
+    "PubMedCentral": null
+  },
+  "PubMedCentral": null,
+  "PubMed": null,
+  "MAG": 2971196067.0,
+  "DOI": "10.18653/v1/D19-1018",
+  "CorpusId": 202621357,
+  "ArxIv": null,
+  "DBLP": "conf/emnlp/NiLM19",
+  "ACL": "D19-1018",
+  "referencecount": 35,
+  "venue": "Conference on Empirical Methods in Natural Language Processing",
+  "journal": {
+    "name": null,
+    "pages": "188-197",
+    "volume": null
+  },
+  "volume": null,
+  "pages": "188-197",
+  "name": null,
+  "isopenaccess": true,
+  "url": "https://www.semanticscholar.org/paper/41d49ec6f73ab5621ab8e8cb5ddb677a886ccc76",
+  "fieldofstudy_source": "s2-fos-model",
+  "fieldofstudy_category": "Computer Science",
+  "rn": 1,
+  "explicit_gpu_hours": "None specified",
+  "estimated_gpu_hours": "None specified",
+  "number_gpu": "None specified",
+  "gpu_type": "None specified",
+  "training_details": "None specified",
+  "reasoning": "None specified",
+  "summary": "The paper presents a study on generating convincing and personalized justifications for recommendations using distant reviews and fine-grained aspects. Existing methods for generating justifications struggle with relevance and quality, prompting the authors to propose a new pipeline that identifies justification candidates from review segments and constructs a dataset for training models. Two models are introduced: a reference-based Seq2Seq model with aspect planning and an aspect-conditional masked language model (ACMLM). The reference model learns from historical justifications, while the ACMLM increases diversity in generated justifications. The authors conduct experiments using datasets from Yelp and Amazon Clothing, demonstrating the effectiveness of their models in producing high-quality and diverse justification outputs.",
+  "classification": "Application Paper",
+  "methods": "[\"Seq2Seq\", \"Aspect Planning\", \"Masked Language Model\"]",
+  "results": "[\"Generated convincing and diverse justifications\", \"Achieved higher F1-score using a BERT classifier\", \"Ref2Seq outperforms baselines in BLEU scores\", \"ACMLM achieved higher diversity scores compared to some baselines\"]",
+  "models": "[\"BERT\", \"Ref2Seq\", \"ACMLM\"]",
+  "datasets": "[\"Yelp\", \"Amazon Clothing\"]",
+  "metrics": "[\"F1-score\", \"BLEU\", \"Distinct-1\", \"Distinct-2\"]",
+  "limitations": null,
+  "train_row_index": 992752,
+  "stratum": "high_gt100"
+}

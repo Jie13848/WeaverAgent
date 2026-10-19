@@ -1,0 +1,83 @@
+-Goal-
+Given a text chunk from an academic paper and a list of entity types, extract ONLY the most important, specifically-named entities and their relationships.
+
+STRICT FILTERING RULES (violations will produce garbage output):
+
+1. QUANTITY CONTROL: For each text chunk, extract AT MOST 5-8 entities. If a chunk has fewer meaningful entities, extract fewer. Zero is acceptable.
+
+2. ONLY extract these kinds of entities:
+   - NAMED algorithms/methods with proper names (e.g. "Random Forest", "AdaBoost", "BERT", "ResNet")
+   - NAMED datasets (e.g. "ImageNet", "MNIST", "UCI Breast Cancer")
+   - NAMED people (e.g. "Breiman", "Hinton")
+   - SPECIFIC papers referenced by author+year (e.g. "Breiman, 2001")
+   - NAMED innovations/contributions that have a clear identity
+
+3. ABSOLUTELY DO NOT extract any of these:
+   - Mathematical variables or parameters: M, N, K, L, F, x, y, n, p, k, L=3, F=2, T=100
+   - Generic statistical/ML concepts: accuracy, variance, bias, error, loss, convergence, overfitting, generalization, prediction, classification, regression, training, testing
+   - Numeric values or ranges: "300 samples", "20 inputs", "2 classes", "95%"
+   - Generic nouns: strength, correlation, performance, improvement, combination, selection, estimation, function, distribution, probability, margin, weight, feature, tree, node, split, vote
+   - Dataset properties: "train size", "test size", "inputs", "classes", "dimensions"
+   - Section headers or structural text
+
+4. DEDUPLICATION: If the same entity appears with slight name variations (e.g. "Random Forest" vs "Random Forests" vs "RF"), use ONE canonical name.
+
+5. RELATIONSHIPS: Only extract relationships between entities you've already extracted. Each relationship must represent a meaningful academic connection (proposes, evaluates_on, outperforms, extends, cites, etc.)
+
+-Steps-
+1. Identify entities. For each:
+- entity_name: Proper name of the entity, CAPITALIZED
+- entity_type: One of: [{entity_types}]
+- entity_description: One-sentence description of what this entity is
+Format: ("entity"<|><entity_name><|><entity_type><|><entity_description>)
+
+2. Identify relationships between extracted entities:
+- source_entity: name from step 1
+- target_entity: name from step 1
+- relationship_description: why they are related
+- relationship_strength: 1-10
+Format: ("relationship"<|><source_entity><|><target_entity><|><relationship_description><|><relationship_strength>)
+
+3. Return as a single list using **##** as delimiter.
+
+4. Output <|COMPLETE|> when done.
+
+######################
+-Examples-
+######################
+Example 1:
+Entity_types: PAPER,METHOD,DATASET,AUTHOR,INNOVATION,TASK,BASELINE
+Text:
+Breiman (2001) introduced Random Forests, an ensemble learning method that constructs multiple decision trees using bootstrap samples and random feature selection. The method was evaluated on the UCI Breast Cancer dataset with 300 training and 3000 test samples across 20 input dimensions, achieving 97.3% accuracy with M=1 and F=2 parameters, outperforming both Bagging and AdaBoost. The key innovation is random subspace selection at each split. Experiments also used the Twonorm and Ringnorm synthetic datasets.
+######################
+Output:
+("entity"<|>RANDOM FORESTS<|>METHOD<|>Ensemble learning method that combines multiple decision trees with bootstrap sampling and random feature selection)
+##
+("entity"<|>BREIMAN<|>AUTHOR<|>Leo Breiman, researcher who introduced Random Forests in 2001)
+##
+("entity"<|>UCI BREAST CANCER<|>DATASET<|>Medical dataset from the UCI repository used for classification evaluation)
+##
+("entity"<|>BAGGING<|>BASELINE<|>Bootstrap Aggregating ensemble method)
+##
+("entity"<|>ADABOOST<|>BASELINE<|>Adaptive Boosting ensemble method)
+##
+("entity"<|>TWONORM<|>DATASET<|>Synthetic dataset used for algorithm benchmarking)
+##
+("entity"<|>RINGNORM<|>DATASET<|>Synthetic dataset used for algorithm benchmarking)
+##
+("relationship"<|>BREIMAN<|>RANDOM FORESTS<|>Breiman introduced the Random Forests method<|>10)
+##
+("relationship"<|>RANDOM FORESTS<|>UCI BREAST CANCER<|>Random Forests was evaluated on UCI Breast Cancer, achieving 97.3% accuracy<|>8)
+##
+("relationship"<|>RANDOM FORESTS<|>BAGGING<|>Random Forests outperformed Bagging<|>7)
+##
+("relationship"<|>RANDOM FORESTS<|>ADABOOST<|>Random Forests outperformed AdaBoost<|>7)
+<|COMPLETE|>
+
+######################
+-Real Data-
+######################
+Entity_types: {entity_types}
+Text: {input_text}
+######################
+Output:

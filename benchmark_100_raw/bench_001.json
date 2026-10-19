@@ -1,0 +1,239 @@
+{
+  "corpus_id": 1040556,
+  "parsed_title": "Learning principled bilingual mappings of word embeddings while preserving monolingual invariance",
+  "parsed_authors": [
+    "Mikel Artetxe mikel.artetxe@ehu.eus \nIXA NLP Group\nUniversity of the Basque Country (UPV/EHU)",
+    "Gorka Labaka gorka.labaka@ehu.eus \nIXA NLP Group\nUniversity of the Basque Country (UPV/EHU)",
+    "Eneko Agirre e.agirre@ehu.eus \nIXA NLP Group\nUniversity of the Basque Country (UPV/EHU)"
+  ],
+  "abstract": "Mapping word embeddings of different languages into a single space has multiple applications. In order to map from a source space into a target space, a common approach is to learn a linear mapping that minimizes the distances between equivalences listed in a bilingual dictionary. In this paper, we propose a framework that generalizes previous work, provides an efficient exact method to learn the optimal linear transformation and yields the best bilingual results in translation induction while preserving monolingual performance in an analogy task.",
+  "sections": [
+    {
+      "content": "Bilingual word embeddings have attracted a lot of attention in recent times (Zou et al., 2013;Kočiský et al., 2014;Chandar A P et al., 2014;Gouws et al., 2014;Gouws and Søgaard, 2015;Luong et al., 2015;Wick et al., 2016). A common approach to obtain them is to train the embeddings in both languages independently and then learn a mapping that minimizes the distances between equivalences listed in a bilingual dictionary. The learned transformation can also be applied to words missing in the dictionary, which can be used to induce new translations with a direct application in machine translation (Mikolov et al., 2013b;Zhao et al., 2015).\nThe first method to learn bilingual word embedding mappings was proposed by Mikolov et al. (2013b), who learn the linear transformation that minimizes the sum of squared Euclidean distances for the dictionary entries. Subsequent work has proposed alternative optimization objectives to learn better mappings. Xing et al. (2015) incorporate length normalization in the training of word embeddings and try to maximize the cosine similarity instead, introducing an orthogonality constraint to preserve the length normalization after the projection. Faruqui and Dyer (2014) use canonical correlation analysis to project the embeddings in both languages to a shared vector space.\nBeyond linear mappings, Lu et al. (2015) apply deep canonical correlation analysis to learn a nonlinear transformation for each language. Finally, additional techniques have been used to address the hubness problem in Mikolov et al. (2013b), both through the neighbor retrieval method  and the training itself . We leave the study of non-linear transformation and other additions for further work.\nIn this paper, we propose a general framework to learn bilingual word embeddings. We start with a basic optimization objective (Mikolov et al., 2013b) and introduce several meaningful and intuitive constraints that are equivalent or closely related to previously proposed methods (Faruqui and Dyer, 2014;Xing et al., 2015). Our framework provides a more general view of bilingual word embedding mappings, showing the underlying connection between the existing methods, revealing some flaws in their theoretical justification and providing an alternative theoretical interpretation for them. Our experiments on an existing English-Italian word translation induction and an English word analogy task give strong empirical evidence in favor of our theoretical reasoning, while showing that one of our models clearly outperforms previous alternatives.",
+      "title": "Introduction"
+    },
+    {
+      "content": "Let X and Z denote the word embedding matrices in two languages for a given bilingual dictionary so that their ith row X i * and Z i * are the word embeddings of the ith entry in the dictionary. Our goal is to find a linear transformation matrix W so that XW best approximates Z, which we formalize minimizing the sum of squared Euclidean distances following Mikolov et al. (2013b):\nAlternatively, this is equivalent to minimizing the (squared) Frobenius norm of the residual matrix:\nConsequently, W will be the so called leastsquares solution of the linear matrix equation XW = Z. This is a well-known problem in linear algebra and can be solved by taking the Moore-Penrose pseudoinverse X + = X T X −1 X T as W = X + Z, which can be computed using SVD.",
+      "title": "Learning bilingual mappings"
+    },
+    {
+      "content": "Monolingual invariance is needed to preserve the dot products after mapping, avoiding performance degradation in monolingual tasks (e.g. analogy). This can be obtained requiring W to be an orthogonal matrix (W T W = I). The exact solution under such orthogonality constraint is given by W = V U T , where Z T X = U ΣV T is the SVD factorization of Z T X (cf. Appendix A). Thanks to this, the optimal transformation can be efficiently computed in linear time with respect to the vocabulary size. Note that orthogonality enforces an intuitive property, and as such it could be useful to avoid degenerated solutions and learn better bilingual mappings, as we empirically show in Section 3.",
+      "title": "Orthogonality for monolingual invariance"
+    },
+    {
+      "content": "Normalizing word embeddings in both languages to be unit vectors guarantees that all training instances contribute equally to the optimization goal. As long as W is orthogonal, this is equivalent to maximizing the sum of cosine similarities for the dictionary entries, which is commonly used for similarity computations:\nThis last optimization objective coincides with Xing et al. (2015), but their work was motivated by an hypothetical inconsistency in Mikolov et al. (2013b), where the optimization objective to learn word embeddings uses dot product, the objective to learn mappings uses Euclidean distance and the similarity computations use cosine. However, the fact is that, as long as W is orthogonal, optimizing the squared Euclidean distance of length-normalized embeddings is equivalent to optimizing the cosine, and therefore, the mapping objective proposed by Xing et al. (2015) is equivalent to that used by Mikolov et al. (2013b) with orthogonality constraint and unit vectors. In fact, our experiments show that orthogonality is more relevant than length normalization, in contrast to Xing et al. (2015), who introduce orthogonality only to ensure that unit length is preserved after mapping.",
+      "title": "Length normalization for maximum cosine"
+    },
+    {
+      "content": "Dimension-wise mean centering captures the intuition that two randomly taken words would not be expected to be semantically similar, ensuring that the expected product of two random embeddings in any dimension and, consequently, their cosine similarity, is zero. As long as W is orthogonal, this is equivalent to maximizing the sum of dimensionwise covariance for the dictionary entries:\nwhere C m denotes the centering matrix This equivalence reveals that the method proposed by Faruqui and Dyer (2014) is closely related to our framework. More concretely, Faruqui and Dyer (2014) use Canonical Correlation Analysis (CCA) to project the word embeddings in both languages to a shared vector space. CCA maximizes the dimension-wise covariance of both projections (which is equivalent to maximizing the covariance of a single projection if the transformations are constrained to be orthogonal, as in our case) but adds an implicit restriction to the two mappings, making different dimensions have the same variance and be uncorrelated among themselves 1 :\nTherefore, the only fundamental difference between both methods is that, while our model enforces monolingual invariance, Faruqui and Dyer (2014) do change the monolingual embeddings to meet this restriction. In this regard, we think that the restriction they add could have a negative impact on the learning of the bilingual mapping, and it could also degrade the quality of the monolingual embeddings. Our experiments (cf. Section 3) show empirical evidence supporting this idea.",
+      "title": "Mean centering for maximum covariance"
+    },
+    {
+      "content": "In this section, we experimentally test the proposed framework and all its variants in comparison with related methods. For that purpose, we use the translation induction task introduced by Mikolov et al. (2013b), which learns a bilingual mapping on a small dictionary and measures its accuracy on predicting the translation of new words. Unfortunately, the dataset they use is not public. For that reason, we use the English-Italian dataset on the same task provided by  2 . The dataset contains monolingual word embeddings trained with the word2vec toolkit using the CBOW method with negative sampling (Mikolov et al., 2013a) 3 . The English embeddings were trained on a 2.8 billion word corpus (ukWaC + Wikipedia + BNC), while the 1.6 billion word corpus itWaC was used to train the Italian 1 While CCA is typically defined in terms of correlation (thus its name), correlation is invariant to the scaling of variables, so it is possible to constrain the canonical variables to have a fixed variance, as we do, in which case correlation and covariance become equivalent 2 http://clic.cimec.unitn.it/˜georgiana. dinu/down/ 3 The context window was set to 5 words, the dimension of the embeddings to 300, the sub-sampling to 1e-05 and the number of negative samples to 10 embeddings. The dataset also contains a bilingual dictionary learned from Europarl, split into a training set of 5,000 word pairs and a test set of 1,500 word pairs, both of them uniformly distributed in frequency bins. Accuracy is the evaluation measure.\nApart from the performance of the projected embeddings in bilingual terms, we are also interested in the monolingual quality of the source language embeddings after the projection. For that purpose, we use the word analogy task proposed by Mikolov et al. (2013a), which measures the accuracy on answering questions like \"what is the word that is similar to small in the same sense as biggest is similar to big?\" using simple word vector arithmetic. The dataset they use consists of 8,869 semantic and 10,675 syntactic questions of this type, and is publicly available 4 . In order to speed up the experiments, we follow the authors and perform an approximate evaluation by reducing the vocabulary size according to a frequency threshold of 30,000 (Mikolov et al., 2013a). Since the original embeddings are the same in all the cases and it is only the transformation that is applied to them that changes, this affects all the methods in the exact same way, so the results are perfectly comparable among themselves. With these settings, we obtain a coverage of 64.98%.\nWe implemented the proposed method in Python using NumPy, and make it available as an open source project 5 . The code for Mikolov et al. (2013b) and Xing et al. (2015) is not publicly available, so we implemented and tested them as part of the proposed framework, which only differs from the original systems in the optimization method (exact solution instead of gradient descent) and the length normalization approach in the case of Xing et al. (2015) (postprocessing instead of constrained training). As for the method by Faruqui and Dyer (2014), we used their original implementation in Python and MAT-LAB 6 , which we extended to cover cases where the dictionary contains more than one entry for the same word.",
+      "title": "Experiments"
+    },
+    {
+      "content": "The rows in Table 1 show, respectively, the results for the original embeddings, the basic mapping proposed by Mikolov et al. (2013b) (cf. Section 2) and the addition of orthogonality constraint (cf. Section 2.1), with and without length normalization and, incrementally, mean centering. In all the cases, length normalization and mean centering were applied to all embeddings, even if missing from the dictionary. The results show that the orthogonality constraint is key to preserve monolingual performance, and it also improves bilingual performance by enforcing a relevant property (monolingual invariance) that the transformation to learn should intuitively have. The contribution of length normalization alone is marginal, but when followed by mean centering we obtain further improvements in bilingual performance without hurting monolingual performance. Table 2 shows the results for our best performing configuration in comparison to previous work. As discussed before, (Mikolov et al., 2013b) and (Xing et al., 2015) were implemented as part of our framework, so they correspond to our uncostrained mapping with no preprocessing and orthogonal mapping with length normalization, respectively.",
+      "title": "Results of our framework"
+    },
+    {
+      "content": "As it can be seen, the method by Xing et al. (2015) performs better than that of Mikolov et al. (2013b) in the translation induction task, which is in line with what they report in their paper. Moreover, thanks to the orthogonality constraint their monolingual performance in the word analogy task does not degrade, whereas the accuracy of Mikolov et al. (2013b) drops by 2.86% in absolute terms with respect to the original embeddings.\nSince Faruqui and Dyer (2014) take advantage of EN-IT EN AN. Original embeddings -76. 66% Mikolov et al. (2013b) 34.93% 73. 80% Xing et al. (2015) 36.87% 76.66% Faruqui and Dyer (2014)   CCA to perform dimensionality reduction, we tested several values for it and report the best (180 dimensions). This beats the method by Xing et al. (2015) in the bilingual task, although it comes at the price of a considerable degradation in monolingual quality.\nIn any case, it is our proposed method with the orthogonality constraint and a global preprocessing with length normalization followed by dimensionwise mean centering that achieves the best accuracy in the word translation induction task. Moreover, it does not suffer from any considerable degradation in monolingual quality, with an anecdotal drop of only 0.07% in contrast with 2.86% for Mikolov et al. (2013b) and 7.02% for Faruqui and Dyer (2014).\nWhen compared to Xing et al. (2015), our results in Table 1 reinforce our theoretical interpretation for their method (cf. Section 2.2), as it empirically shows that its improvement with respect to Mikolov et al. (2013b) comes solely from the orthogonality constraint, and not from solving any inconsistency.\nIt should be noted that the implementation by Faruqui and Dyer (2014) also length-normalizes the word embeddings in a preprocessing step. Following the discussion in Section 2.3, this means that our best performing configuration is conceptually very close to the method by Faruqui and Dyer (2014), as they both coincide on maximizing the average dimension-wise covariance and length-normalize the embeddings in both languages first, the only difference being that our model enforces monolingual invariance after the normalization while theirs does change the monolingual embeddings to make different dimensions have the same variance and be uncorrelated among themselves. However, our model performs considerably better than any configuration from Faruqui and Dyer (2014) in both the monolingual and the bilingual task, supporting our hypothesis that these two constraints that are implicit in their method are not only conceptually confusing, 2292 but also have a negative impact.",
+      "title": "Comparison to other work"
+    },
+    {
+      "content": "This paper develops a new framework to learn bilingual word embedding mappings, generalizing previous work and providing an efficient exact method to learn the optimal transformation. Our experiments show the effectiveness of the proposed model and give strong empirical evidence in favor of our reinterpretation of Xing et al. (2015) and Faruqui and Dyer (2014). It is the proposed method with the orthogonality constraint and a global preprocessing with length normalization and dimension-wise mean centering that achieves the best overall results both in monolingual and bilingual terms, surpassing those previous methods. In the future, we would like to study non-linear mappings (Lu et al., 2015) and the additional techniques in . ish Ministry of Economy and Competitiveness (TADEEP TIN2015-70214-P). Mikel Artetxe enjoys a doctoral grant from the Spanish Ministry of Education, Culture and Sports.",
+      "title": "Conclusions"
+    },
+    {
+      "content": "Constraining W to be orthogonal (W T W = I), the original minimization problem can be reformulated as follows (cf. Section 2.1):\nIn the above expression, Tr(·) denotes the trace operator (the sum of all the elements in the main diagonal), and the last equality is given by its cyclic property. At this point, we can take the SVD of Z T X as Z T X = U ΣV T , so Tr Z T XW = Tr U ΣV T W = Tr ΣV T W U . Since V T , W and U are orthogonal matrices, their product V T W U will also be an orthogonal matrix. In addition to that, given that Σ is a diagonal matrix, its trace after an orthogonal transformation will be maximal when the values in its main diagonal are preserved after the mapping, that is, when the orthogonal transformation matrix is the identity matrix. This will happen when V T W U = I in our case, so the optimal solution will be W = V U T .",
+      "title": "A Proof of solution under orthogonality"
+    },
+    {
+      "content": "",
+      "title": "Table 1 :"
+    },
+    {
+      "content": "",
+      "title": "Table 2 :"
+    }
+  ],
+  "figures": [
+    {
+      "caption": "Our results in bilingual and monolingual tasks.",
+      "content": "Table 1 :\n1Our results in bilingual and monolingual tasks.EN-IT EN AN. \nOriginal embeddings \n-\n76.66% \nUnconstrained mapping 34.93% 73.80% \n+ length normalization \n33.80% 73.61% \n+ mean centering \n38.47% 73.71% \nOrthogonal mapping \n36.73% 76.66% \n+ length normalization \n36.87% 76.66% \n+ mean centering \n39.27% 76.59%",
+      "id": ""
+    },
+    {
+      "caption": "Comparison of our method to other work.",
+      "content": "Table 2 :\n2Comparison of our method to other work.",
+      "id": ""
+    }
+  ],
+  "references": [
+    {
+      "doi": "",
+      "text": "An autoencoder approach to learning bilingual word representations. Sarath Chandar, A P , Stanislas Lauly, Hugo Larochelle, Mitesh Khapra, Balaraman Ravindran, C Vikas, Amrita Raykar, Saha, Advances in Neural Information Processing Systems. 27Sarath Chandar A P, Stanislas Lauly, Hugo Larochelle, Mitesh Khapra, Balaraman Ravindran, Vikas C Raykar, and Amrita Saha. 2014. An autoencoder ap- proach to learning bilingual word representations. In Advances in Neural Information Processing Systems 27, pages 1853-1861."
+    },
+    {
+      "doi": "",
+      "text": "Improving zero-shot learning by mitigating the hubness problem. Georgiana Dinu, Angeliki Lazaridou, Marco Baroni, Proceedings of the 3rd International Conference on Learning Representations (ICLR2015), workshop track. the 3rd International Conference on Learning Representations (ICLR2015), workshop trackGeorgiana Dinu, Angeliki Lazaridou, and Marco Baroni. 2015. Improving zero-shot learning by mitigating the hubness problem. In Proceedings of the 3rd In- ternational Conference on Learning Representations (ICLR2015), workshop track."
+    },
+    {
+      "doi": "",
+      "text": "Improving vector space word representations using multilingual correlation. Manaal Faruqui, Chris Dyer, Proceedings of the 14th Conference of the European Chapter of the Association for Computational Linguistics. the 14th Conference of the European Chapter of the Association for Computational LinguisticsManaal Faruqui and Chris Dyer. 2014. Improving vector space word representations using multilingual correla- tion. In Proceedings of the 14th Conference of the Eu- ropean Chapter of the Association for Computational Linguistics, pages 462-471."
+    },
+    {
+      "doi": "",
+      "text": "Simple taskspecific bilingual word embeddings. Stephan Gouws, Anders Søgaard, Proceedings of the 2015 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies. the 2015 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language TechnologiesStephan Gouws and Anders Søgaard. 2015. Simple task- specific bilingual word embeddings. In Proceedings of the 2015 Conference of the North American Chap- ter of the Association for Computational Linguistics: Human Language Technologies, pages 1386-1390."
+    },
+    {
+      "doi": "arXiv:1410.2455",
+      "text": "Stephan Gouws, Yoshua Bengio, Greg Corrado, arXiv:1410.2455Bilbowa: Fast bilingual distributed representations without word alignments. arXiv preprintStephan Gouws, Yoshua Bengio, and Greg Corrado. 2014. Bilbowa: Fast bilingual distributed repre- sentations without word alignments. arXiv preprint arXiv:1410.2455."
+    },
+    {
+      "doi": "",
+      "text": "Learning bilingual word representations by marginalizing alignments. Tomáš Kočiský, Karl Moritz Hermann, Phil Blunsom, Proceedings of the 52nd Annual Meeting of the Association for Computational Linguistics. the 52nd Annual Meeting of the Association for Computational Linguistics2Tomáš Kočiský, Karl Moritz Hermann, and Phil Blun- som. 2014. Learning bilingual word representations by marginalizing alignments. In Proceedings of the 52nd Annual Meeting of the Association for Computa- tional Linguistics, volume 2, pages 224-229."
+    },
+    {
+      "doi": "",
+      "text": "Hubness and pollution: Delving into crossspace mapping for zero-shot learning. Angeliki Lazaridou, Georgiana Dinu, Marco Baroni, Proceedings of the 53rd Annual Meeting of the Association for Computational Linguistics and the 7th International Joint Conference on Natural Language Processing. the 53rd Annual Meeting of the Association for Computational Linguistics and the 7th International Joint Conference on Natural Language Processing1Angeliki Lazaridou, Georgiana Dinu, and Marco Baroni. 2015. Hubness and pollution: Delving into cross- space mapping for zero-shot learning. In Proceed- ings of the 53rd Annual Meeting of the Association for Computational Linguistics and the 7th Interna- tional Joint Conference on Natural Language Process- ing, volume 1, pages 270-280."
+    },
+    {
+      "doi": "",
+      "text": "Deep multilingual correlation for improved word embeddings. Ang Lu, Weiran Wang, Mohit Bansal, Kevin Gimpel, Karen Livescu, Proceedings of the 2015 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies. the 2015 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language TechnologiesAng Lu, Weiran Wang, Mohit Bansal, Kevin Gimpel, and Karen Livescu. 2015. Deep multilingual correlation for improved word embeddings. In Proceedings of the 2015 Conference of the North American Chapter of the Association for Computational Linguistics: Hu- man Language Technologies, pages 250-256."
+    },
+    {
+      "doi": "",
+      "text": "Bilingual word representations with monolingual quality in mind. Min-Thang Luong, Hieu Pham, Christopher D Manning, NAACL Workshop on Vector Space Modeling for NLP. Min-Thang Luong, Hieu Pham, and Christopher D. Man- ning. 2015. Bilingual word representations with monolingual quality in mind. In NAACL Workshop on Vector Space Modeling for NLP, pages 151-159."
+    },
+    {
+      "doi": "arXiv:1301.3781",
+      "text": "Efficient estimation of word representations in vector space. Tomas Mikolov, Kai Chen, Greg Corrado, Jeffrey Dean, arXiv:1301.3781arXiv preprintTomas Mikolov, Kai Chen, Greg Corrado, and Jeffrey Dean. 2013a. Efficient estimation of word representa- tions in vector space. arXiv preprint arXiv:1301.3781."
+    },
+    {
+      "doi": "arXiv:1309.4168",
+      "text": "Exploiting similarities among languages for machine translation. Tomas Mikolov, V Quoc, Ilya Le, Sutskever, arXiv:1309.4168arXiv preprintTomas Mikolov, Quoc V Le, and Ilya Sutskever. 2013b. Exploiting similarities among languages for machine translation. arXiv preprint arXiv:1309.4168."
+    },
+    {
+      "doi": "",
+      "text": "Minimally-constrained multilingual embeddings via artificial code-switching. Michael Wick, Pallika Kanani, Adam Pocock, Thirtieth AAAI conference on Artificial Intelligence (AAAI). Michael Wick, Pallika Kanani, and Adam Pocock. 2016. Minimally-constrained multilingual embeddings via artificial code-switching. In Thirtieth AAAI confer- ence on Artificial Intelligence (AAAI)."
+    },
+    {
+      "doi": "",
+      "text": "Normalized word embedding and orthogonal transform for bilingual word translation. Chao Xing, Dong Wang, Chao Liu, Yiye Lin, Proceedings of the 2015 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies. the 2015 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language TechnologiesChao Xing, Dong Wang, Chao Liu, and Yiye Lin. 2015. Normalized word embedding and orthogonal trans- form for bilingual word translation. In Proceedings of the 2015 Conference of the North American Chap- ter of the Association for Computational Linguistics: Human Language Technologies, pages 1006-1011."
+    },
+    {
+      "doi": "",
+      "text": "Learning translation models from monolingual continuous representations. Kai Zhao, Hany Hassan, Michael Auli, Proceedings of the 2015 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies. the 2015 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language TechnologiesKai Zhao, Hany Hassan, and Michael Auli. 2015. Learn- ing translation models from monolingual continuous representations. In Proceedings of the 2015 Confer- ence of the North American Chapter of the Associa- tion for Computational Linguistics: Human Language Technologies, pages 1527-1536."
+    },
+    {
+      "doi": "",
+      "text": "Bilingual word embeddings for phrase-based machine translation. Will Y Zou, Richard Socher, Daniel Cer, Christopher D Manning, Proceedings of the 2013 Conference on Empirical Methods in Natural Language Processing. the 2013 Conference on Empirical Methods in Natural Language ProcessingWill Y. Zou, Richard Socher, Daniel Cer, and Christo- pher D. Manning. 2013. Bilingual word embeddings for phrase-based machine translation. In Proceedings of the 2013 Conference on Empirical Methods in Nat- ural Language Processing, pages 1393-1398."
+    }
+  ],
+  "parsed_external_ids": {
+    "acl": "D16-1250",
+    "arxiv": null,
+    "dblp": "conf/emnlp/ArtetxeLA16",
+    "doi": "10.18653/v1/d16-1250",
+    "mag": 2561995736.0,
+    "pubmed": null,
+    "pubmedcentral": null
+  },
+  "source": {
+    "open_access": {
+      "license": "CCBY",
+      "status": "HYBRID",
+      "url": "https://www.aclweb.org/anthology/D16-1250.pdf"
+    },
+    "pdf_sha": "9a2eed5f8175275af0d55d4aed39afc8e2b2acf2",
+    "pdf_urls": [
+      "https://www.aclweb.org/anthology/D16-1250.pdf"
+    ]
+  },
+  "pdf_urls": [
+    "https://www.aclweb.org/anthology/D16-1250.pdf"
+  ],
+  "pdf_sha": "9a2eed5f8175275af0d55d4aed39afc8e2b2acf2",
+  "open_access": {
+    "license": "CCBY",
+    "status": "HYBRID",
+    "url": "https://www.aclweb.org/anthology/D16-1250.pdf"
+  },
+  "license": "CCBY",
+  "open_access_url": "https://www.aclweb.org/anthology/D16-1250.pdf",
+  "open_access_status": "HYBRID",
+  "metadata_title": "Learning principled bilingual mappings of word embeddings while preserving monolingual invariance",
+  "metadata_authors": [
+    {
+      "authorId": 2347956.0,
+      "name": "Mikel Artetxe"
+    },
+    {
+      "authorId": 3255091.0,
+      "name": "Gorka Labaka"
+    },
+    {
+      "authorId": 1733049.0,
+      "name": "Eneko Agirre"
+    }
+  ],
+  "publicationdate": "2016-11-01",
+  "influentialcitationcount": 66,
+  "citationcount": 393,
+  "year": 2016,
+  "publicationvenueid": "41bf9ed3-85b3-4c90-b015-150e31690253",
+  "publicationtypes": [
+    "JournalArticle",
+    "Conference"
+  ],
+  "metadata_externalids": {
+    "ACL": "D16-1250",
+    "ArXiv": null,
+    "CorpusId": 1040556,
+    "DBLP": "conf/emnlp/ArtetxeLA16",
+    "DOI": "10.18653/v1/D16-1250",
+    "MAG": 2561995736.0,
+    "PubMed": null,
+    "PubMedCentral": null
+  },
+  "PubMedCentral": null,
+  "PubMed": null,
+  "MAG": 2561995736.0,
+  "DOI": "10.18653/v1/D16-1250",
+  "CorpusId": 1040556,
+  "ArxIv": null,
+  "DBLP": "conf/emnlp/ArtetxeLA16",
+  "ACL": "D16-1250",
+  "referencecount": 15,
+  "venue": "Conference on Empirical Methods in Natural Language Processing",
+  "journal": {
+    "name": null,
+    "pages": "2289-2294",
+    "volume": null
+  },
+  "volume": null,
+  "pages": "2289-2294",
+  "name": null,
+  "isopenaccess": true,
+  "url": "https://www.semanticscholar.org/paper/9a2eed5f8175275af0d55d4aed39afc8e2b2acf2",
+  "fieldofstudy_source": "external",
+  "fieldofstudy_category": "Computer Science",
+  "rn": 1,
+  "explicit_gpu_hours": "None specified",
+  "estimated_gpu_hours": "None specified",
+  "number_gpu": "None specified",
+  "gpu_type": "None specified",
+  "training_details": "Word embeddings trained with the word2vec toolkit using the CBOW method with negative sampling. The English embeddings were trained on a 2.8 billion word corpus, while the Italian was trained on a 1.6 billion word corpus.",
+  "reasoning": "None specified",
+  "summary": "This paper presents a new framework for learning bilingual mappings of word embeddings while ensuring monolingual invariance. The authors point out limitations in existing methods and propose an exact method for learning optimal linear transformations, showcasing its effectiveness in translation induction and analogy tasks. The proposed approach integrates orthogonality and length normalization with mean centering to improve performance across bilingual and monolingual tasks. Experiments conducted using an English-Italian dataset demonstrate the framework's superiority compared to alternative methods. The study concludes with suggestions for future investigations into non-linear mappings.",
+  "classification": "Benchmark Paper",
+  "methods": "[\"Linear Transformation\", \"Orthogonality Constraint\", \"Length Normalization\", \"Mean Centering\"]",
+  "results": "[\"Improved bilingual performance\", \"Preserved monolingual performance\"]",
+  "models": "[\"None specified\"]",
+  "datasets": "[\"English-Italian\"]",
+  "metrics": "[\"Accuracy\"]",
+  "limitations": null,
+  "train_row_index": 826931,
+  "stratum": "high_gt100"
+}

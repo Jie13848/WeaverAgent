@@ -1,0 +1,294 @@
+{
+  "corpus_id": 218538018,
+  "parsed_title": "Bundle Recommendation with Graph Convolutional Networks",
+  "parsed_authors": [
+    "Jianxin Chang \nBeijing National Research Center for Information Science and Technology (BNRist)\nDepartment of Electronic Engineering\nTsinghua University",
+    "Chen Gao \nBeijing National Research Center for Information Science and Technology (BNRist)\nDepartment of Electronic Engineering\nTsinghua University",
+    "Xiangnan He \nSchool of Information Science and Technology\nUniversity of Science and Technology of China",
+    "Yong Li liyong07@tsinghua.edu.cn \nBeijing National Research Center for Information Science and Technology (BNRist)\nDepartment of Electronic Engineering\nTsinghua University",
+    "Jin Depeng \nBeijing National Research Center for Information Science and Technology (BNRist)\nDepartment of Electronic Engineering\nTsinghua University",
+    "Jianxin Chang \nBeijing National Research Center for Information Science and Technology (BNRist)\nDepartment of Electronic Engineering\nTsinghua University",
+    "Chen Gao",
+    "Xiangnan He \nBeijing National Research Center for Information Science and Technology (BNRist)\nDepartment of Electronic Engineering\nTsinghua University\n\n\nSchool of Information Science and Technology\nUniversity of Science and Technology of China",
+    "Yong Li \nBeijing National Research Center for Information Science and Technology (BNRist)\nDepartment of Electronic Engineering\nTsinghua University",
+    "Depeng Jin \nBeijing National Research Center for Information Science and Technology (BNRist)\nDepartment of Electronic Engineering\nTsinghua University"
+  ],
+  "abstract": "Bundle recommendation aims to recommend a bundle of items for a user to consume as a whole. Existing solutions integrate useritem interaction modeling into bundle recommendation by sharing model parameters or learning in a multi-task manner, which cannot explicitly model the affiliation between items and bundles, and fail to explore the decision-making when a user chooses bundles. In this work, we propose a graph neural network model named BGCN (short for Bundle Graph Convolutional Network) for bundle recommendation. BGCN unifies user-item interaction, user-bundle interaction and bundle-item affiliation into a heterogeneous graph. With item nodes as the bridge, graph convolutional propagation between user and bundle nodes makes the learned representations capture the item level semantics. Through training based on hard-negative sampler, the user's fine-grained preferences for similar bundles are further distinguished. Empirical results on two real-world datasets demonstrate the strong performance gains of BGCN, which outperforms the state-of-the-art baselines by 10.77% to 23.18%.",
+  "sections": [
+    {
+      "content": "The prevalence of bundled items on e-commerce and content platforms makes bundle recommendation become an important task. It is not only able to avoid users' monotonous choices to improve their experience, but also increase business sales by expanding the order sizes. Since a bundle is composed of multiple items, the attractiveness of a bundle depends on its items, and the attractiveness of items in a bundle affects each other. Besides, users need to be satisfied with most items in the bundle, which means that there is a sparser interaction between the user and the bundle.\nMost existing works for bundle recommendation [2,6,7] regard item and bundle recommendation as two separate tasks, and associate them by sharing model parameters. A recent study [3] proposed a multi-task framework that transfers the benefits of the item recommendation task to the bundle recommendation to alleviate the scarcity of user-bundle interactions. Despite effectiveness, we argue that they suffer from three major limitations: Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee provided that copies are not made or distributed for profit or commercial advantage and that copies bear this notice and the full citation on the first page. Copyrights for components of this work owned by others than ACM must be honored. Abstracting with credit is permitted. To copy otherwise, or republish, to post on servers or to redistribute to lists, requires prior specific permission and/or a fee. Request permissions from permissions@acm.org. SIGIR'20, July 25-30, 2020, Xi'an, China © 2020 Association for Computing Machinery. ACM ISBN 978-x-xxxx-xxxx-x/YY/MM. . . $15.00 https://doi.org/10.1145/nnnnnnn.nnnnnnn • Separated modeling of two affiliated entities. Parameters sharing does not explicitly model the relationship between users, items and bundles, and the combination of multi-task way is difficult to balance the weights of the main task and auxiliary task. • Substitution of bundles is not considered. Existing works only consider the correlation between items in a bundle to enhance the item task. However, the association between the bundles as the recommended target is even more critical. • Decision-making is ignored when users interact with bundles. At the item level, even though a user likes most items in a bundle, but may refuse the bundle because of the existence of one disliked item. At the bundle level, for two highly similar bundles, the key to the user's final selection is their non-overlapping parts.\nTo address these limitations, we propose a solution named Bundle Graph Convolutional Network (BGCN). Utilizing the strong power of graph neural networks in learning from complicated topology and higher-order connectivity, our BGCN effectively incorporates item-awareness into bundle recommender as follows, a) It unifies user nodes, item nodes and bundle nodes into a heterogeneous graph, propagating embeddings between users and bundles with items as the bridge. b) The bundle-item-bundle meta-path is built on the graph to capture an alternative relationship between bundles. c) Through training with hard-negative samples, the user's decisionmaking when choosing bundles is further explored.\nTo summarize, the main contributions of this work are as follows. • To the best of our knowledge, we are the first to propose a graph neural network model to explicitly model complex relations between users, items and bundles to solve the problem of bundle recommender. • We develop embedding propagation at two levels on the constructed graph, which distinguish affiliation between item and bundle nodes to learn the representation of users and bundles with item level information. Training with hard negatives further explores the fine-grained differences between bundles. • Extensive experiments on two real-world datasets show that our proposed method outperforms existing state-of-the-art baselines by 10.77% to 23.18%.",
+      "title": "Introduction"
+    },
+    {
+      "content": "In order to integrate item level information to improve bundle recommendation accuracy, there are two types of important side information that need to be modeled, the user's preference to item and bundle's composition information. We use U, B and I to denote the set of users, bundles and items, and define user-bundle interaction matrix, user-item interaction matrix, and bundle-item affiliation matrix as X M ×N = {x ub |u ∈ U, b ∈ B}, Y M ×O = {y ui |u ∈ U, i ∈ I}, and Z N ×O = {z bi |b ∈ B, i ∈ I} with a binary value at each entry, respectively. An observed interaction x ub means user u once interacted bundle b, and an observed interaction y ui means user u Input: user-bundle interaction data X M ×N , user-item interaction data Y M ×O , and bundle-item affiliation data Z N ×O .\nOutput: A recommendation model that estimates the probability that user u will interact with bundle b. Figure 1 illustrates our proposed BGCN model which is made up of the following three parts.",
+      "title": "Problem Definition"
+    },
+    {
+      "content": "• Heterogeneous Graph Construction. We explicitly model the interaction and affiliation between users, bundles, and items by unifying them into a heterogeneous graph. • Levels Propagation. The propagation at two levels on the constructed graph can capture the CF signal between users and items/bundles, the semantics of bundles and the alternatives between bundles through distinguishing the affiliation relationship between item and bundle nodes. • Training with Hard Negatives. Considering the user's caution when choosing a bundle, the hard negatives further encode finegrained representations of the user and the bundle.",
+      "title": "Methodology"
+    },
+    {
+      "content": "To explicitly model the relationship between users, bundles, and items, we first build a unified heterogeneous graph. The interaction and affiliation data can be represented by an undirected graph G = (V, E), where nodes are V consisting of user nodes u ∈ U, bundle nodes b ∈ B and item nodes i ∈ I, and edges are E consisting of user-bundle interaction edges (u, b) with x ub = 1, user-item interaction edges (u, i) with y ui = 1, and bundle-item affiliation edges (b, i) with z bi = 1. The second block in Figure 1 illustrates our constructed graph. For user, item and bundle nodes on the constructed graph, we apply one-hot encoding to encode the input and compress them to dense real-value vectors as follows,\nwhere\ndenotes the one-hot feature vector for user u, item i, and bundle b. P, Q, and R denote the matrices of user embedding, item embedding, and bundle embedding, respectively.",
+      "title": "Heterogeneous Graph Construction"
+    },
+    {
+      "content": "The user's preference for an item in the bundle can attract the user's attention and interest to this bundle. Since the bundled items are often carefully designed, they are often compatible with each other in function and compose some semantics to affect the user's selection context. For example, the bundle with a mattress and a bed frame reflects the meaning of bedroom furniture, and the bundle with a suit and a tie reflects the meaning of workplace dressing.\nTo capture user preferences for the item and characteristic of the item itself, we build upon an embedded propagation layer between user and item. Then information pooling from item to bundle can seize the semantic information of the bundle from the item level.\nThe propagation-based and pooling-based embedding updating rules for user u, item i and bundle b can be formulated as follows,\nwhere W 1 is learned weight, b 1 is learned bias, σ is non-linear activation function LeakyReLU. N u , N i , N b represent neighbors of user u, item i and bundle b, respectively. We use the simple mean function as the aggregation function and leave other more complex functions for future exploration. Through the special propagation mechanism, the impact of bundle data sparsity can be weakened and the cold start capability of the model may be improved naturally.",
+      "title": "Item Level Propagation"
+    },
+    {
+      "content": "The close association between items in a bundle makes two bundles that share some items very similar. The degree of similarity can be inferred from how many items they share. For example, computer sets that share five components are closer in performance than two, and movie lists that share ten films are closer in theme than five. For users, such bundles that share more items can often be considered at the same time.\nWe design a bundle-to-user embedding propagation module to learn preference for bundles from the bundle level. Then, a user-tobundle embedding propagation is performed to extract bundle overall attributes. Because highly overlapping bundles exhibit similar patterns in attracting users, we develop weighted propagation based on the degree of overlap on the bundle-item-bundle meta-path to seize alternative relationships between bundles. The embedding updating rules at the bundle level can be formulated as follows,\nwhere W 2 and b 2 are the trainable transformation matrix and bias, respectively. M b represents neighbors of bundle b on the bundleitem-bundle meta-path. β bb ′ represents the overlap intensity between bundles after normalization. Propagation of attributes expressed by similar b helps bundles learn better representations and further enhance message-passing between u and b.",
+      "title": "Bundle Level Propagation"
+    },
+    {
+      "content": "After we iteratively do such propagation for L times, we obtain L user/bundle embeddings. We concatenate all layers' embeddings to combine the information received from neighbors of different depths for prediction.\nFinally, we use the inner product for final prediction and combine bundle and item levels as follows,",
+      "title": "Prediction"
+    },
+    {
+      "content": "Because bundles contain more items and have higher prices, users are often cautious when making decisions or spending money in bundle scenarios to avoid unnecessary risks. For example, even though a user likes most items in a bundle, but may refuse the bundle because of the existence of one disliked item. For two highly similar bundles, the key to the user's final selection is their nonoverlapping parts.\nTo optimize our BGCN model and take into account the user's decision-making when interacting with the bundle, we design a learning strategy based on hard-negative samples. Firstly, we adopt a pairwise learning manner that is widely used in implicit recommender systems [8]. Then after the model converges, the hard negative samples are introduced with a certain probability for more detailed training. Thus, we define the objective function as follows,\nwhere Q = {(u, b, c)|(u, b) ∈ Y + , (u, c) ∈ Y − } denote the pairwise training data with negative sampling. Y + and Y − denote the observed and unobserved user-bundle interaction, respectively. In the hard-negative sampler, for every (u, b) ∈ Y + , c ∈ Y − is the bundle that u has not interacted with but interacted with most of its internal items or that overlaps with b, as shown in the fifth block in Figure 1. To prevent over-fitting, we adopt L2 regularization where Θ stands for model parameters and λ controls the penalty strength.",
+      "title": "Training with Hard Negatives"
+    },
+    {
+      "content": "In this section, we conduct extensive experiments to answer the following three research questions:\n• RQ1: How does our proposed BGCN model perform as compared with the state-of-the-art methods? • RQ2: How do the key designs in our model affect performance? • RQ3: How can BGCN alleviate the data sparsity problem in bundle recommender?",
+      "title": "Experiments"
+    },
+    {
+      "content": "",
+      "title": "Experimental Settings"
+    },
+    {
+      "content": "We use the following two realworld datasets for evaluation, with their statistics shown in Table 1.\n• Netease 1 This is a dataset from the largest music platform in China collected by [2]. It enables users to bundle songs with a specific theme or add any bundles to their favorites. • Youshu 2 This dataset is constructed by [3] from Youshu, a Chinese book review site. Similar to Netease, every bundle is a list of books that users desired. We adopt two widely used metrics, Recall@K and NDCG@K, to judge the performance of the ranking list, where Recall@K measures the ratio of test bundles that have been contained by the top-K ranking list, while NDCG@K complements Recall by assigning higher scores to the hits at higher positions of the list.",
+      "title": "Datasets and Metrics"
+    },
+    {
+      "content": "To demonstrate the effectiveness of our BGCN model, we compare it with the following six state-of-the-art methods.",
+      "title": "Baselines and Parameters"
+    },
+    {
+      "content": "Personalized Ranking pairwise learning framework, which is widely used for implicit feedback. • GCN-BG [1] This is a widely used graph neural network model in the recommendation. In the method, we apply GCN to the user-bundle bipartite interaction graph. • GCN-TG [1] We use the same way with BGCN to build the useritem-bundle tripartite unified graph, but the difference is that the message is passed between all kinds of nodes at the same time. • NGCF-BG [9] This is the state-of-the-art model which uses graph neural network to extract higher-order connectivity for the recommendation. Similar to GCN-BG, here only user and bundle are used to build the interaction bipartite graph. • NGCF-TG [9] NGCF-TG performs propagation in the same way as GCN-TG on the tripartite graph. Since item information is introduced, the embedding learned by the model might have stronger representation ability. • DAM [3] This is the state-of-the-art deep model in bundle recommendation. It uses the attention mechanism and multi-task learning framework to extend NCF [4]. For all these methods, we adopt BPR loss and set the negative sampling rate to 1. We employ Adam optimizer with the 2048-size mini-batch and fit the embedding size as 64. The learning rate is searched in {1e-5, 3e-5, 1e-4, 3e-4, 1e-3, 3e-3} and L 2 regularization term is tuned in {1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2}. For GCN-based methods, we search the message dropout and node dropout within {0, 0.1, 0.3, 0.5}. For training, the hard-negative samples are selected with an 80% probability.",
+      "title": "• MFBPR[8] This is a matrix factorization method under a Bayesian"
+    },
+    {
+      "content": "The experiment results are reported in Table 2. From the results, we have the following observations. • Our proposed BGCN achieves the best performance. We can observe that our model BGCN significantly outperforms all baselines in terms of Recall and NDCG metrics. Specifically, BGCN outperforms the best baseline by 19.65% -23.18% and 10.77% -12.36% on the Netease dataset and Youshu dataset, respectively. Due to the special design, BGCN is the best model for utilizing graph structure and item interaction at the same time. • Graph models are effective but not enough. Although the better performance of GCN and NGCF compared to MFBPR proves the strong power of the graph model, they fail to exceed the state-of-the-art baseline DAM that leverage item interaction to recommend bundle. Therefore, designs to make graph neural network work in bundle task is necessary, which validates our motivation of incorporating items into the user-bundle graph. • More input does not always mean better performance. The performance of GCN-TG and NGCF-TG with the same constructed graph as BGCN is not always better than GCN-BG and NGCF-BG. This shows that if the model itself cannot distinguish the affiliation relation between item and bundle nodes, the extra item input may bring the noise. Therefore, our special design for propagation in the tripartite unified graph is necessary.",
+      "title": "Overal Performance (RQ1)"
+    },
+    {
+      "content": "To evaluate the effectiveness of several key designs in BGCN, we performed ablation studies as shown in Table 3.\n• Effectiveness of Levels Propagation We compare the performance of the model performing propagation at the only item level, only bundle level, and both levels. The results show that the model with two levels outperforms the model with on only bundle level by 9.36% -11.57% and 2.75% -11.39% on the Netease dataset and Youshu dataset, respectively. • Effectiveness of B2B Propagation The impact of overlap-based bundle propagation is tested by comparing the performance",
+      "title": "Ablation Study (RQ2)"
+    },
+    {
+      "content": "Compared to items, bundles have extremely rare interactions, so data sparsity is a significant issue for bundle recommendation. To study whether our method can alleviate the data sparsity issue, we divide users into three groups according to sparsity as shown in Figure 2 and present the recommendation performance of the Netease dataset. From the results, we can observe that the performance gap between BGCN and other methods becomes larger when data become sparser, except for the NGCF-TG which is very similar to our model. Furthermore, even in the user group with only 0~3 purchase records, BGCN still keeps an excellent recommendation performance of 0.069 for Recall@40 and 0.023 for NDCG@40, which outperforms the best method NGCF-TG by 30.19% and 27.78%, respectively. As a summary, we conclude that our proposed BGCN model alleviate data sparsity issue efficiently to some extent.",
+      "title": "Impact of Data Sparsity (RQ3)"
+    },
+    {
+      "content": "Although bundles are currently widely used everywhere, few efforts have been made in solving the bundle recommendation problem. List Recommendation Model (LIRE) [6] and Embedding Factorization Machine (EFM) [2] simultaneously utilized the users' interactions with both items and bundles under the BPR framework. The Bundle BPR (BBPR) Model [7] made use of the parameters  [3] jointly modeled user-bundle interactions and user-item interactions in a multi-task manner.\nThe basic idea of graph convolutional networks (GCN) [5] is to reduce the high-dimensional adjacency information of a node in the graph to a low-dimensional vector representation. With the strong power of learning structure, GCN is widely applied in recommender systems. Berg et al. [1] first applied GCN to the recommendation to factorize several rating matrices. Ying et al. [10] extended it to web-scale recommender systems with neighbor-sampling. Recently, Wang et al. [9] further approached a more general model that uses high-level connectivity learned by GCN to encode CF signals.",
+      "title": "Related Work"
+    },
+    {
+      "content": "In this work, we study the task of bundle recommender systems. We propose a graph-based solution BGCN that re-construct the two kinds of interaction and an affiliation into the graph. The model utilizes the graph neural network's powerful ability to learn the representation of two dependent entities from complex structures. Extensive experiments demonstrate its effectiveness on real-world datasets. As future work, we plan to consider the discount factor in bundle recommendation.",
+      "title": "Conclusions and Future Work"
+    },
+    {
+      "content": "",
+      "title": "Figure 1 :"
+    },
+    {
+      "content": "",
+      "title": "Figure 2 :"
+    },
+    {
+      "content": "",
+      "title": "Table 1 :"
+    },
+    {
+      "content": "",
+      "title": "Table 2 :"
+    },
+    {
+      "content": "",
+      "title": "Table 3 :"
+    }
+  ],
+  "figures": [
+    {
+      "caption": "once interacted item i. Similarly, an entry z bi = 1 means bundle b contains item i. M, N and O denote the number of users, bundles and items, respectively. Based on the above definition, the problem of bundle recommendation is then formulated as follows: arXiv:2005.03475v1 [cs.IR] The illustration of BGCN model, where u 1 is the target user and b 2 is the target bundle. For a clear display, we divide the unfied heterogeneous graph into two kinds of relationships and draw them separately. Best view in color.",
+      "content": "Figure 1 :\n1once interacted item i. Similarly, an entry z bi = 1 means bundle b contains item i. M, N and O denote the number of users, bundles and items, respectively. Based on the above definition, the problem of bundle recommendation is then formulated as follows: arXiv:2005.03475v1 [cs.IR] The illustration of BGCN model, where u 1 is the target user and b 2 is the target bundle. For a clear display, we divide the unfied heterogeneous graph into two kinds of relationships and draw them separately. Best view in color.",
+      "id": ""
+    },
+    {
+      "caption": "Performance with different data sparsity previously learned through an item BPR model. Recently, Deep Attentive Multi-Task Model (DAM)",
+      "content": "Figure 2 :\n2Performance with different data sparsity previously learned through an item BPR model. Recently, Deep Attentive Multi-Task Model (DAM)",
+      "id": ""
+    },
+    {
+      "caption": "Statistics of two utilized real-world datasets",
+      "content": "Table 1 :\n1Statistics of two utilized real-world datasetsDataset \n#U \n#I \n#B \n#U-I \n#U-B \n\n#Avg. I in B \n\nNetease 18,528 123,628 22,864 1,128,065 302,303 \n77.80 \nYoushu \n8,039 \n32,770 \n4,771 \n138,515 \n51,377 \n37.03",
+      "id": ""
+    },
+    {
+      "caption": "Performance comparisons on two real-world datasets with six baselines",
+      "content": "Table 2 :\n2Performance comparisons on two real-world datasets with six baselinesMethod \n\nNetease",
+      "id": ""
+    },
+    {
+      "caption": "Ablation study of the key designs of models with no b2b propagation, unweighted b2b propagation, and weighted b2b propagation. The performance gains of the model introduced overlap-based b2b propagation are 5.84% -6.74% and 1.79% -9.02% on the Netease dataset and Youshu dataset, respectively. It is shown that adding b2b propagation can help extract bundle correlations, especially when the degree of overlap is injected into the model. • Effectiveness of Hard-negative sample We compare the performance of the model under training with no hard samples, and hard samples at the item level, the bundle level, and both levels, respectively. We can observe that the model with hard-negative sample performs better than the model with simple sample by 9.26% -10.64% and 3.95% -11.78% on the Netease dataset and Youshu dataset, respectively. This demonstrates that hard-negative sample improves performance, especially when considering hardnegative samples at both item and bundle levels.",
+      "content": "Table 3 :\n3Ablation study of the key designs of models with no b2b propagation, unweighted b2b propagation, and weighted b2b propagation. The performance gains of the model introduced overlap-based b2b propagation are 5.84% -6.74% and 1.79% -9.02% on the Netease dataset and Youshu dataset, respectively. It is shown that adding b2b propagation can help extract bundle correlations, especially when the degree of overlap is injected into the model. • Effectiveness of Hard-negative sample We compare the performance of the model under training with no hard samples, and hard samples at the item level, the bundle level, and both levels, respectively. We can observe that the model with hard-negative sample performs better than the model with simple sample by 9.26% -10.64% and 3.95% -11.78% on the Netease dataset and Youshu dataset, respectively. This demonstrates that hard-negative sample improves performance, especially when considering hardnegative samples at both item and bundle levels.Model \n\nNetease \n\nYoushu \n\nRecall@40 NDCG@40 Recall@40 NDCG@40 \n\nLevels \nPropagation \n\nItem Level \n0.0121 \n0.0046 \n0.0786 \n0.0419 \nBundle Level \n0.0685 \n0.0284 \n0.2805 \n0.1387 \nI&B Levels \n0.0749 \n0.0317 \n0.3124 \n0.1425 \n\nB2B \nPropagation \n\nNo B2B \n0.0708 \n0.0297 \n0.2866 \n0.1400 \nUnweighted B2B \n0.0738 \n0.0312 \n0.3040 \n0.1418 \nWeighted B2B \n0.0749 \n0.0317 \n0.3124 \n0.1425 \n\nHard-negative \nSample \n\nNo Hard \n0.0749 \n0.0317 \n0.3124 \n0.1425 \nItem Level \n0.0807 \n0.0343 \n0.3235 \n0.1573 \nBundle Level \n0.0816 \n0.0343 \n0.3240 \n0.1581 \nI&B Levels \n0.0829 \n0.0346 \n0.3248 \n0.1593",
+      "id": ""
+    }
+  ],
+  "references": [
+    {
+      "doi": "",
+      "text": "Graph convolutional matrix completion. Rianne Van Den, Thomas N Berg, Max Kipf, Welling, KDD. Rianne van den Berg, Thomas N Kipf, and Max Welling. 2017. Graph convolu- tional matrix completion. In KDD."
+    },
+    {
+      "doi": "",
+      "text": "Embedding factorization models for jointly recommending items and user generated lists. Da Cao, Liqiang Nie, Xiangnan He, Xiaochi Wei, Shunzhi Zhu, Tat-Seng Chua, SIGIR. Da Cao, Liqiang Nie, Xiangnan He, Xiaochi Wei, Shunzhi Zhu, and Tat-Seng Chua. 2017. Embedding factorization models for jointly recommending items and user generated lists. In SIGIR. 585-594."
+    },
+    {
+      "doi": "",
+      "text": "Matching user with item set: collaborative bundle recommendation with deep attention network. Liang Chen, Yang Liu, Xiangnan He, Lianli Gao, Zibin Zheng, IJCAI. Liang Chen, Yang Liu, Xiangnan He, Lianli Gao, and Zibin Zheng. 2019. Matching user with item set: collaborative bundle recommendation with deep attention network. In IJCAI. 2095-2101."
+    },
+    {
+      "doi": "",
+      "text": "Xiangnan He, Lizi Liao, Hanwang Zhang, Liqiang Nie, Xia Hu, Tat-Seng Chua, Neural collaborative filtering. In WWW. Xiangnan He, Lizi Liao, Hanwang Zhang, Liqiang Nie, Xia Hu, and Tat-Seng Chua. 2017. Neural collaborative filtering. In WWW. 173-182."
+    },
+    {
+      "doi": "",
+      "text": "Semi-supervised classification with graph convolutional networks. N Thomas, Max Kipf, Welling, ICLR. Thomas N Kipf and Max Welling. 2017. Semi-supervised classification with graph convolutional networks. In ICLR."
+    },
+    {
+      "doi": "",
+      "text": "Recommending user generated item lists. Yidan Liu, Min Xie, Laks Vs Lakshmanan, RecSys. Yidan Liu, Min Xie, and Laks VS Lakshmanan. 2014. Recommending user gener- ated item lists. In RecSys. 185-192."
+    },
+    {
+      "doi": "",
+      "text": "Generating and personalizing bundle recommendations on steam. Apurva Pathak, Kshitiz Gupta, Julian Mcauley, SIGIR. Apurva Pathak, Kshitiz Gupta, and Julian McAuley. 2017. Generating and per- sonalizing bundle recommendations on steam. In SIGIR. 1073-1076."
+    },
+    {
+      "doi": "",
+      "text": "BPR: Bayesian personalized ranking from implicit feedback. Steffen Rendle, Christoph Freudenthaler, Zeno Gantner, Lars Schmidt-Thieme, UAI. Steffen Rendle, Christoph Freudenthaler, Zeno Gantner, and Lars Schmidt-Thieme. 2009. BPR: Bayesian personalized ranking from implicit feedback. In UAI."
+    },
+    {
+      "doi": "",
+      "text": "Neural graph collaborative filtering. Xiang Wang, Xiangnan He, Meng Wang, Fuli Feng, Tat-Seng Chua, SIGIR. Xiang Wang, Xiangnan He, Meng Wang, Fuli Feng, and Tat-Seng Chua. 2019. Neural graph collaborative filtering. In SIGIR. 165-174."
+    },
+    {
+      "doi": "",
+      "text": "Graph convolutional neural networks for web-scale recommender systems. Rex Ying, Ruining He, Kaifeng Chen, Pong Eksombatchai, L William, Jure Hamilton, Leskovec, Rex Ying, Ruining He, Kaifeng Chen, Pong Eksombatchai, William L Hamilton, and Jure Leskovec. 2018. Graph convolutional neural networks for web-scale recommender systems. In KDD. 974-983."
+    }
+  ],
+  "parsed_external_ids": {
+    "acl": null,
+    "arxiv": "2005.03475",
+    "dblp": "conf/sigir/ChangG0JL20",
+    "doi": "10.1145/3397271.3401198",
+    "mag": 3034471508.0,
+    "pubmed": null,
+    "pubmedcentral": null
+  },
+  "source": {
+    "open_access": {
+      "license": null,
+      "status": "GREEN",
+      "url": "http://arxiv.org/pdf/2005.03475"
+    },
+    "pdf_sha": "9ee8f774306c0a349b19cdffcaf21d9a1819eedd",
+    "pdf_urls": [
+      "https://arxiv.org/pdf/2005.03475v1.pdf"
+    ]
+  },
+  "pdf_urls": [
+    "https://arxiv.org/pdf/2005.03475v1.pdf"
+  ],
+  "pdf_sha": "9ee8f774306c0a349b19cdffcaf21d9a1819eedd",
+  "open_access": {
+    "license": null,
+    "status": "GREEN",
+    "url": "http://arxiv.org/pdf/2005.03475"
+  },
+  "license": null,
+  "open_access_url": "http://arxiv.org/pdf/2005.03475",
+  "open_access_status": "GREEN",
+  "metadata_title": "Bundle Recommendation with Graph Convolutional Networks",
+  "metadata_authors": [
+    {
+      "authorId": 2630544.0,
+      "name": "Jianxin Chang"
+    },
+    {
+      "authorId": 49281242.0,
+      "name": "Chen Gao"
+    },
+    {
+      "authorId": 7792071.0,
+      "name": "Xiangnan He"
+    },
+    {
+      "authorId": 39948674.0,
+      "name": "Yong Li"
+    },
+    {
+      "authorId": 49953590.0,
+      "name": "Depeng Jin"
+    }
+  ],
+  "publicationdate": "2020-05-07",
+  "influentialcitationcount": 20,
+  "citationcount": 103,
+  "year": 2020,
+  "publicationvenueid": "8dce23a9-44e0-4381-a39e-2acc1edff700",
+  "publicationtypes": [
+    "Book",
+    "JournalArticle",
+    "Conference"
+  ],
+  "metadata_externalids": {
+    "ACL": null,
+    "ArXiv": "2005.03475",
+    "CorpusId": 218538018,
+    "DBLP": "conf/sigir/ChangG0JL20",
+    "DOI": "10.1145/3397271.3401198",
+    "MAG": 3023045989.0,
+    "PubMed": null,
+    "PubMedCentral": null
+  },
+  "PubMedCentral": null,
+  "PubMed": null,
+  "MAG": 3023045989.0,
+  "DOI": "10.1145/3397271.3401198",
+  "CorpusId": 218538018,
+  "ArxIv": "2005.03475",
+  "DBLP": "conf/sigir/ChangG0JL20",
+  "ACL": null,
+  "referencecount": 12,
+  "venue": "Annual International ACM SIGIR Conference on Research and Development in Information Retrieval",
+  "journal": {
+    "name": "Proceedings of the 43rd International ACM SIGIR Conference on Research and Development in Information Retrieval",
+    "pages": null,
+    "volume": null
+  },
+  "volume": null,
+  "pages": null,
+  "name": "Proceedings of the 43rd International ACM SIGIR Conference on Research and Development in Information Retrieval",
+  "isopenaccess": true,
+  "url": "https://www.semanticscholar.org/paper/9ee8f774306c0a349b19cdffcaf21d9a1819eedd",
+  "fieldofstudy_source": "s2-fos-model",
+  "fieldofstudy_category": "Computer Science",
+  "rn": 1,
+  "explicit_gpu_hours": "None specified",
+  "estimated_gpu_hours": "None specified",
+  "number_gpu": "None specified",
+  "gpu_type": "None specified",
+  "training_details": "None specified",
+  "reasoning": "None specified",
+  "summary": "This paper investigates the problem of bundle recommendation using a model called Bundle Graph Convolutional Network (BGCN) that aims to improve the recommendation process by addressing the limitations of existing methods. These limitations include the separate modeling of item and bundle interactions, ignoring substitution of bundles, and overlooking decision-making aspects when users choose bundles. The BGCN model integrates user-item and user-bundle interactions as well as bundle-item affiliations into a unified graph structure. It employs graph convolutional networks to enhance the learning of representations that capture item-level semantics and uses hard-negative sampling during training to refine user preferences for similar bundles. Experimental results on two real-world datasets demonstrate that BGCN significantly outperforms state-of-the-art recommendation methods by a margin of 10.77% to 23.18%.",
+  "classification": "Application Paper",
+  "methods": "[\"Graph Convolutional Networks\", \"Graph Neural Networks\"]",
+  "results": "[\"BGCN outperforms state-of-the-art methods by 10.77% to 23.18% on two datasets.\", \"BGCN maintains good performance even with sparse data.\"]",
+  "models": "[\"BGCN\"]",
+  "datasets": "[\"Netease\", \"Youshu\"]",
+  "metrics": "[\"Recall@K\", \"NDCG@K\"]",
+  "limitations": "[\"Separated modeling of user-item and user-bundle interactions.\", \"Neglecting the substitution of bundles in recommendations.\", \"Ignoring decision-making factors affecting user choices.\"]",
+  "train_row_index": 796742,
+  "stratum": "high_gt100"
+}

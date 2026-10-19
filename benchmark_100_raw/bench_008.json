@@ -1,0 +1,382 @@
+{
+  "corpus_id": 18993998,
+  "parsed_title": "Attention-based LSTM for Aspect-level Sentiment Classification",
+  "parsed_authors": [
+    "Yequan Wang wangyequan@live.cn",
+    "Minlie Huang aihuang@tsinghua.edu.cnlizo@microsoft.com",
+    "Li Zhao \nMicrosoft Research Asia",
+    "Xiaoyan Zhu",
+    "Department of Computer Science and Technology\nState Key Laboratory on Intelligent Technology and Systems Tsinghua National Laboratory for Information Science and Technology\nTsinghua University\n100084BeijingChina"
+  ],
+  "abstract": "Aspect-level sentiment classification is a finegrained task in sentiment analysis. Since it provides more complete and in-depth results, aspect-level sentiment analysis has received much attention these years. In this paper, we reveal that the sentiment polarity of a sentence is not only determined by the content but is also highly related to the concerned aspect. For instance, \"The appetizers are ok, but the service is slow.\", for aspect taste, the polarity is positive while for service, the polarity is negative. Therefore, it is worthwhile to explore the connection between an aspect and the content of a sentence. To this end, we propose an Attention-based Long Short-Term Memory Network for aspect-level sentiment classification. The attention mechanism can concentrate on different parts of a sentence when different aspects are taken as input. We experiment on the SemEval 2014 dataset and results show that our model achieves state-ofthe-art performance on aspect-level sentiment classification.",
+  "sections": [
+    {
+      "content": "Sentiment analysis (Nasukawa and Yi, 2003), also known as opinion mining (Liu, 2012), is a key NLP task that receives much attention these years. Aspect-level sentiment analysis is a fine-grained task that can provide complete and in-depth results. In this paper, we deal with aspect-level sentiment classification and we find that the sentiment polarity of a sentence is highly dependent on both content and aspect. For example, the sentiment polarity of \"Staffs are not that friendly, but the taste covers all.\" will be positive if the aspect is food but negative when considering the aspect service. Polarity could be opposite when different aspects are considered.\nNeural networks have achieved state-of-the-art performance in a variety of NLP tasks such as machine translation (Lample et al., 2016), paraphrase identification (Yin et al., 2015), question answering (Golub and He, 2016) and text summarization (Rush et al., 2015). However, neural network models are still in infancy to deal with aspectlevel sentiment classification. In some works, target dependent sentiment classification can be benefited from taking into account target information, such as in Target-Dependent LSTM (TD-LSTM) and Target-Connection LSTM (TC-LSTM) (Tang et al., 2015a). However, those models can only take into consideration the target but not aspect information which is proved to be crucial for aspect-level classification.\nAttention has become an effective mechanism to obtain superior results, as demonstrated in image recognition (Mnih et al., 2014), machine translation (Bahdanau et al., 2014), reasoning about entailment (Rocktäschel et al., 2015) and sentence summarization (Rush et al., 2015). Even more, neural attention can improve the ability to read comprehension (Hermann et al., 2015). In this paper, we propose an attention mechanism to enforce the model to attend to the important part of a sentence, in response to a specific aspect. We design an aspect-tosentence attention mechanism that can concentrate on the key part of a sentence given the aspect.\nWe explore the potential correlation of aspect and sentiment polarity in aspect-level sentiment classification. In order to capture important information in response to a given aspect, we design an attentionbased LSTM. We evaluate our approach on a benchmark dataset (Pontiki et al., 2014), which contains restaurants and laptops data.\nThe main contributions of our work can be summarized as follows:\n• We propose attention-based Long Short-Term memory for aspect-level sentiment classification. The models are able to attend different parts of a sentence when different aspects are concerned. Results show that the attention mechanism is effective.\n• Since aspect plays a key role in this task, we propose two ways to take into account aspect information during attention: one way is to concatenate the aspect vector into the sentence hidden representations for computing attention weights, and another way is to additionally append the aspect vector into the input word vectors.\n• Experimental results indicate that our approach can improve the performance compared with several baselines, and further examples demonstrate the attention mechanism works well for aspect-level sentiment classification.\nThe rest of our paper is structured as follows: Section 2 discusses related works, Section 3 gives a detailed description of our attention-based proposals, Section 4 presents extensive experiments to justify the effectiveness of our proposals, and Section 5 summarizes this work and the future direction.",
+      "title": "Introduction"
+    },
+    {
+      "content": "In this section, we will review related works on aspect-level sentiment classification and neural networks for sentiment classification briefly.",
+      "title": "Related Work"
+    },
+    {
+      "content": "Aspect-level sentiment classification is typically considered as a classification problem in the liter-ature. As we mentioned before, aspect-level sentiment classification is a fine-grained classification task. The majority of current approaches attempt to detecting the polarity of the entire sentence, regardless of the entities mentioned or aspects. Traditional approaches to solve those problems are to manually design a set of features. With the abundance of sentiment lexicons (Rao and Ravichandran, 2009;Perez-Rosas et al., 2012;Kaji and Kitsuregawa, 2007), the lexicon-based features were built for sentiment analysis (Mohammad et al., 2013). Most of these studies focus on building sentiment classifiers with features, which include bag-of-words and sentiment lexicons, using SVM (Mullen and Collier, 2004). However, the results highly depend on the quality of features. In addition, feature engineering is labor intensive.",
+      "title": "Sentiment Classification at Aspect-level"
+    },
+    {
+      "content": "Since a simple and effective approach to learn distributed representations was proposed (Mikolov et al., 2013), neural networks advance sentiment analysis substantially. Classical models including Recursive Neural Network (Socher et al., 2011;Dong et al., 2014;Qian et al., 2015), Recursive Neural Tensor Network (Socher et al., 2013), Recurrent Neural Network (Mikolov et al., 2010;Tang et al., 2015b), LSTM (Hochreiter and Schmidhuber, 1997) and Tree-LSTMs (Tai et al., 2015) were applied into sentiment analysis currently. By utilizing syntax structures of sentences, tree-based LSTMs have been proved to be quite effective for many NLP tasks. However, such methods may suffer from syntax parsing errors which are common in resourcelacking languages. LSTM has achieved a great success in various NLP tasks. TD-LSTM and TC-LSTM (Tang et al., 2015a), which took target information into consideration, achieved state-of-the-art performance in target-dependent sentiment classification. TC-LSTM obtained a target vector by averaging the vectors of words that the target phrase contains. However, simply averaging the word embeddings of a target phrase is not sufficient to represent the semantics of the target phrase, resulting a suboptimal performance.\nDespite the effectiveness of those methods, it is still challenging to discriminate different sentiment polarities at a fine-grained aspect level. Therefore, we are motivated to design a powerful neural network which can fully employ aspect information for sentiment classification.\n3 Attention-based LSTM with Aspect Embedding 3.1 Long Short-term Memory (LSTM)\nRecurrent Neural Network(RNN) is an extension of conventional feed-forward neural network. However, standard RNN has the gradient vanishing or exploding problems. In order to overcome the issues, Long Short-term Memory network (LSTM) was developed and achieved superior performance (Hochreiter and Schmidhuber, 1997). In the LSTM architecture, there are three gates and a cell memory state. Figure 1 illustrates the architecture of a standard LSTM. {w1, w2, . . . , wN } represent the word vector in a sentence whose length is N . {h1, h2, . . . , hN } is the hidden vector.\nMore formally, each cell in LSTM can be computed as follows:\n(1)\nwhere W i , W f , W o ∈ R d×2d are the weighted matrices and b i , b f , b o ∈ R d are biases of LSTM to be learned during training, parameterizing the transformations of the input, forget and output gates respectively. σ is the sigmoid function and ⊙ stands for element-wise multiplication. x t includes the inputs of LSTM cell unit, representing the word embedding vectors w t in Figure 1. The vector of hidden layer is h t .\nWe regard the last hidden vector h N as the representation of sentence and put h N into a sof tmax layer after linearizing it into a vector whose length is equal to the number of class labels. In our work, the set of class labels is {positive, negative, neutral}.",
+      "title": "Sentiment Classification with Neural Networks"
+    },
+    {
+      "content": "Aspect information is vital when classifying the polarity of one sentence given aspect. We may get opposite polarities if different aspects are considered.\nTo make the best use of aspect information, we propose to learn an embedding vector for each aspect.\nVector v a i ∈ R da is represented for the embedding of aspect i, where d a is the dimension of aspect embedding. A ∈ R da×|A| is made up of all aspect embeddings. To the best of our knowledge, it is the first time to propose aspect embedding.",
+      "title": "LSTM with Aspect Embedding (AE-LSTM)"
+    },
+    {
+      "content": "The standard LSTM cannot detect which is the important part for aspect-level sentiment classification. In order to address this issue, we propose to design an attention mechanism that can capture the key part of sentence in response to a given aspect. Figure 2 represents the architecture of an Attentionbased LSTM (AT-LSTM).\nLet H ∈ R d×N be a matrix consisting of hidden vectors [h 1 , . . . , h N ] that the LSTM produced, where d is the size of hidden layers and N is the length of the given sentence. Furthermore, v a represents the embedding of aspect and e N ∈ R N is a vector of 1s. The attention mechanism will produce an attention weight vector α and a weighted hidden representation r.\nα is a vector consisting of attention weights and r is a weighted representation of sentence with given aspect. The operator in 7 (a circle with a multiplication sign inside, OP for short here) means: v a ⊗e N = [v; v; . . .\n; v], that is, the operator repeatedly concatenates v for N times, where e N is a column vector with N 1s. W v v a ⊗ e N is repeating the linearly transformed v a as many times as there are words in sentence. The final sentence representation is given by:\nwhere, h * ∈ R d , W p and W x are projection parameters to be learned during training. We find that this works practically better if we add W x h N into the final representation of the sentence, which is inspired by (Rocktäschel et al., 2015).\nThe attention mechanism allows the model to capture the most important part of a sentence when different aspects are considered.\nh * is considered as the feature representation of a sentence given an input aspect. We add a linear layer to convert sentence vector to e, which is a realvalued vector with the length equal to class number |C|. Then, a sof tmax layer is followed to transform e to conditional probability distribution.\nwhere W s and b s are the parameters for sof tmax layer.",
+      "title": "Attention-based LSTM (AT-LSTM)"
+    },
+    {
+      "content": "The way of using aspect information in AE-LSTM is letting aspect embedding play a role in computing the attention weight. In order to better take advantage of aspect information, we append the input aspect embedding into each word input vector. The structure of this model is illustrated in 3. In this way, the output hidden representations (h 1 , h 2 , ..., h N ) can have the information from the input aspect (v a ). Therefore, in the following step that compute the attention weights, the inter- dependence between words and the input aspect can be modeled.",
+      "title": "Attention-based LSTM with Aspect Embedding (ATAE-LSTM)"
+    },
+    {
+      "content": "The model can be trained in an end-to-end way by backpropagation, where the objective function (loss function) is the cross-entropy loss. Let y be the target distribution for sentence,ŷ be the predicted sentiment distribution. The goal of training is to minimize the cross-entropy error between y andŷ for all sentences.\nwhere i is the index of sentence, j is the index of class. Our classification is three way. λ is the L 2regularization term. θ is the parameter set. Similar to standard LSTM, the parameter set\nFurthermore, word embeddings are the parameters too. Note that the dimension of W i , W f , W o , W c changes along with different models. If the aspect embeddings are added into the input of the LSTM cell unit, the dimension of W i , W f , W o , W c will be enlarged correspondingly. Additional parameters are listed as follows:\nAT-LSTM: The aspect embedding A is added into the set of parameters naturally. In addition, W h , W v , W p , W x , w are the parameters of attention. Therefore, the additional parameter set of AT-LSTM is {A, W h , W v , W p , W x , w}.\nAE-LSTM: The parameters include the aspect embedding A. Besides, the dimension of W i , W f , W o , W c will be expanded since the aspect vector is concatenated. Therefore, the additional parameter set consists of {A}.\nATAE-LSTM: The parameter set consists of {A, W h , W v , W p , W x , w}. Additionally, the dimension of W i , W f , W o , W c will be expanded with the concatenation of aspect embedding.\nThe word embedding and aspect embedding are optimized during training. The percentage of outof-vocabulary words is about 5%, and they are randomly initialized from U (−ϵ, ϵ), where ϵ = 0.01.\nIn our experiments, we use AdaGrad (Duchi et al., 2011) as our optimization method, which has improved the robustness of SGD on large scale learning task remarkably in a distributed environment (Dean et al., 2012). AdaGrad adapts the learning rate to the parameters, performing larger updates for infrequent parameters and smaller updates for frequent parameters.",
+      "title": "Model Training"
+    },
+    {
+      "content": "We apply the proposed model to aspect-level sentiment classification. In our experiments, all word vectors are initialized by Glove 1 (Pennington et al., 2014). The word embedding vectors are pre-trained on an unlabeled corpus whose size is about 840 billion. The other parameters are initialized by sampling from a uniform distribution U (−ϵ, ϵ). The dimension of word vectors, aspect embeddings and the size of hidden layer are 300. The length of attention weights is the same as the length of sentence. Theano (Bastien et al., 2012) is used for implementing our neural network models. We trained all models with a batch size of 25 examples, and a momentum of 0.9, L 2 -regularization weight of 0.001 and initial learning rate of 0.01 for AdaGrad.",
+      "title": "Experiment"
+    },
+    {
+      "content": "We experiment on the dataset of SemEval 2014 Task 4 2 (Pontiki et al., 2014). The dataset consists of customers reviews. Each review contains a list of aspects and corresponding polarities. Our aim is to identify the aspect polarity of a sentence with the corresponding aspect. The statistics is presented in Table 1.",
+      "title": "Dataset"
+    },
+    {
+      "content": "Aspect-level Classification Given a set of preidentified aspects, this task is to determine the polarity of each aspect. For example, given a sentence, \"The restaurant was too expensive.\", there is an aspect price whose polarity is negative. The set of aspects is {food, price, service, ambience, anecdotes/miscellaneous}. In the dataset of SemEval 2014 Task 4, there is only restaurants data that has aspect-specific polarities. Table 2 Asp  illustrates the comparative results.\nAspect-Term-level Classification For a given set of aspects term within a sentence, this task is to determine whether the polarity of each aspect term is positive, negative or neutral. We conduct experiments on the dataset of SemEval 2014 Task 4. In the sentences of both restaurant and laptop datasets, there are the location and sentiment polarity for each occurrence of an aspect term. For example, there is an aspect term fajitas whose polarity is negative in sentence \"I loved their fajitas.\". Experiments results are shown in Table 3 and Table 4. Similar to the experiment on aspect-level classification, our models achieve state-of-the-art performance.",
+      "title": "Task Definition"
+    },
+    {
+      "content": "We compare our model with several baselines, including LSTM, TD-LSTM, and TC-LSTM.\nLSTM: Standard LSTM cannot capture any aspect information in sentence, so it must get the same (a) the aspect of this sentence: service (b) the aspect of this sentence: food Figure 4: Attention Visualizations. The aspects of (a) and (b) are service and food respectively. The color depth expresses the importance degree of the weight in attention vector α. From (a), attention can detect the important words from the whole sentence dynamically even though multi-semantic phrase such as \"fastest delivery times\" which can be used in other areas. From (b), attention can know multi-keypoints if more than one keypoint existing.",
+      "title": "Comparison with baseline methods"
+    },
+    {
+      "content": "Three   sentiment polarity although given different aspects.\nSince it cannot take advantage of the aspect information, not surprisingly the model has worst performance. TD-LSTM: TD-LSTM can improve the performance of sentiment classifier by treating an aspect as a target. Since there is no attention mechanism in TD-LSTM, it cannot \"know\" which words are important for a given aspect.\nTC-LSTM: TC-LSTM extended TD-LSTM by incorporating a target into the representation of a sentence. It is worth noting that TC-LSTM performs worse than LSTM and TD-LSTM in Table 2. TC-LSTM added target representations, which was obtained from word vectors, into the input of the LSTM cell unit.\nIn our models, we embed aspects into another vector space. The embedding vector of aspects can be learned well in the process of training. ATAE-LSTM not only addresses the shortcoming of the unconformity between word vectors and aspect embeddings, but also can capture the most important information in response to a given aspect. In addition, ATAE-LSTM can capture the important and different parts of a sentence when given different aspects.",
+      "title": "Models"
+    },
+    {
+      "content": "It is enlightening to analyze which words decide the sentiment polarity of the sentence given an aspect. We can obtain the attention weight α in Equation 8 and visualize the attention weights accordingly. Figure 4 shows the representation of how attention focuses on words with the influence of a given aspect. We use a visualization tool Heml (Deng The appetizers are ok, but the service is slow. I highly recommend it for not just its superb cuisine, but also for its friendly owners and staff.\nThe service, however, is a peg or two below the quality of food (horrible bartenders), and the clientele, for the most part, are rowdy, loud-mouthed commuters (this could explain the bad attitudes from the staff) getting loaded for an AC/DC concert or a Knicks game. aspect: service; polarity: negative aspect: food; polarity: neutral The sentences in Figure 4 are \"I have to say they have one of the fastest delivery times in the city .\" and \"The fajita we tried was tasteless and burned and the mole sauce was way too sweet.\". The corresponding aspects are service and food respectively. Obviously attention can get the important parts from the whole sentence dynamically. In Figure 4 (a), \"fastest delivery times\" is a multi-word phrase, but our attention-based model can detect such phrases if service can is the input aspect. Besides, the attention can detect multiple keywords if more than one keyword is existing. In Figure 4 (b), tastless and too sweet are both detected.",
+      "title": "Qualitative Analysis"
+    },
+    {
+      "content": "As we demonstrated, our models obtain the state-ofthe-art performance. In this section, we will further show the advantages of our proposals through some typical examples.\nIn Figure 5, we list some examples from the test set which have typical characteristics and cannot be inferred by LSTM. In sentence (a), \"The appetizers are ok, but the service is slow.\", there are two aspects food and service. Our model can discriminate different sentiment polarities with different aspects. In sentence (b), \"I highly recommend it for not just its superb cuisine, but also for its friendly owners and staff.\", there is a negation word not. Our model can obtain correct polarity, not affected by the negation word who doesn't represent negation here. In the last instance (c), \"The service, however, is a peg or two below the quality of food (horrible bartenders), and the clientele, for the most part, are rowdy, loud-mouthed commuters (this could explain the bad attitudes from the staff) getting loaded for an AC/DC concert or a Knicks game.\", the sentence has a long and complicated structure so that existing parser may hardly obtain correct parsing trees. Hence, tree-based neural network models are difficult to predict polarity correctly. While our attention-based LSTM can work well in those sentences with the help of attention mechanism and aspect embedding.",
+      "title": "Case Study"
+    },
+    {
+      "content": "In this paper, we have proposed attention-based LSTMs for aspect-level sentiment classification.\nThe key idea of these proposals are to learn aspect embeddings and let aspects participate in computing attention weights. Our proposed models can concentrate on different parts of a sentence when different aspects are given so that they are more competitive for aspect-level classification. Experiments show that our proposed models, AE-LSTM and ATAE-LSTM, obtain superior performance over the baseline models.\nThough the proposals have shown potentials for aspect-level sentiment analysis, different aspects are input separately. As future work, an interesting and possible direction would be to model more than one aspect simultaneously with the attention mechanism.",
+      "title": "Conclusion and Future Work"
+    },
+    {
+      "content": "",
+      "title": "Figure 1 :"
+    },
+    {
+      "content": "",
+      "title": "Figure 2 :"
+    },
+    {
+      "content": "",
+      "title": "Figure 3 :"
+    },
+    {
+      "content": "",
+      "title": "Figure 5 :"
+    },
+    {
+      "content": "",
+      "title": "Table 2 :"
+    },
+    {
+      "content": "",
+      "title": "Table 3 :"
+    },
+    {
+      "content": "",
+      "title": "Table 4 :"
+    }
+  ],
+  "figures": [
+    {
+      "caption": "The architecture of a standard LSTM.",
+      "content": "Figure 1 :\n1The architecture of a standard LSTM.",
+      "id": ""
+    },
+    {
+      "caption": "The Architecture of Attention-based LSTM. The aspect embeddings have been used to decide the attention weights along with the sentence representations. {w1, w2, . . . , wN } represent the word vector in a sentence whose length is N . va represents the aspect embedding. α is the attention weight. {h1, h2, . . . , hN } is the hidden vector.",
+      "content": "Figure 2 :\n2The Architecture of Attention-based LSTM. The aspect embeddings have been used to decide the attention weights along with the sentence representations. {w1, w2, . . . , wN } represent the word vector in a sentence whose length is N . va represents the aspect embedding. α is the attention weight. {h1, h2, . . . , hN } is the hidden vector.",
+      "id": ""
+    },
+    {
+      "caption": "The Architecture of Attention-based LSTM with Aspect Embedding. The aspect embeddings have been take as input along with the word embeddings. {w1, w2, . . . , wN } represent the word vector in a sentence whose length is N . va represents the aspect embedding. α is the attention weight. {h1, h2, . . . , hN } is the hidden vector.",
+      "content": "Figure 3 :\n3The Architecture of Attention-based LSTM with Aspect Embedding. The aspect embeddings have been take as input along with the word embeddings. {w1, w2, . . . , wN } represent the word vector in a sentence whose length is N . va represents the aspect embedding. α is the attention weight. {h1, h2, . . . , hN } is the hidden vector.",
+      "id": ""
+    },
+    {
+      "caption": "food; polarity: positive aspect: food; polarity: positive (b) aspect: food; polarity: positive aspect: service; polarity: positive aspect: ambience; polarity: negative (c) Examples of classification. (a) is an instance with different aspects. (b) represents that our model can focus on where the keypoints are and not disturbed by the privative word not. (c) stands for long and complicated sentences. Our model can obtain correct sentiment polarity. et al., 2014) to visualize the sentences. The color depth indicates the importance degree of the weight in attention vector α, the darker the more important.",
+      "content": "Figure 5 :\n5food; polarity: positive aspect: food; polarity: positive (b) aspect: food; polarity: positive aspect: service; polarity: positive aspect: ambience; polarity: negative (c) Examples of classification. (a) is an instance with different aspects. (b) represents that our model can focus on where the keypoints are and not disturbed by the privative word not. (c) stands for long and complicated sentences. Our model can obtain correct sentiment polarity. et al., 2014) to visualize the sentences. The color depth indicates the importance degree of the weight in attention vector α, the darker the more important.",
+      "id": ""
+    },
+    {
+      "caption": "Accuracy on aspect level polarity classification about restaurants. Three-way stands for 3-class prediction. Pos./Neg.",
+      "content": "Table 2 :\n2Accuracy on aspect level polarity classification about restaurants. Three-way stands for 3-class prediction. Pos./Neg.indicates binary prediction where ignoring all neutral instances. \n\nBest scores are in bold.",
+      "id": ""
+    },
+    {
+      "caption": "Accuracy on aspect term polarity classification about restaurants. Three-way stands for 3-class prediction. Pos./Neg.",
+      "content": "Table 3 :\n3Accuracy on aspect term polarity classification about restaurants. Three-way stands for 3-class prediction. Pos./Neg.indicates binary prediction where ignoring all neutral instances. \n\nBest scores are in bold. \n\nModels \nThree-way Pos./Neg. \nLSTM \n66.5 \n-\nTD-LSTM \n68.1 \n-\nAE-LSTM \n68.9 \n87.4 \nATAE-LSTM \n68.7 \n87.6",
+      "id": ""
+    },
+    {
+      "caption": "Accuracy on aspect term polarity classification about",
+      "content": "Table 4 :\n4Accuracy on aspect term polarity classification aboutlaptops. Three-way stands for 3-class prediction. Pos./Neg. in-\n\ndicates binary prediction where ignoring all neutral instances. \n\nBest scores are in bold.",
+      "id": ""
+    }
+  ],
+  "references": [
+    {
+      "doi": "arXiv:1409.0473",
+      "text": "Neural machine translation by jointly learning to align and translate. Dzmitry Bahdanau, Kyunghyun Cho, Yoshua Bengio, arXiv:1409.0473arXiv preprintDzmitry Bahdanau, Kyunghyun Cho, and Yoshua Ben- gio. 2014. Neural machine translation by jointly learning to align and translate. arXiv preprint arXiv:1409.0473."
+    },
+    {
+      "doi": "arXiv:1211.5590",
+      "text": "Frédéric Bastien, Pascal Lamblin, Razvan Pascanu, James Bergstra, Ian Goodfellow, Arnaud Bergeron, Nicolas Bouchard, David Warde-Farley, Yoshua Bengio, arXiv:1211.5590Theano: new features and speed improvements. arXiv preprintFrédéric Bastien, Pascal Lamblin, Razvan Pascanu, James Bergstra, Ian Goodfellow, Arnaud Bergeron, Nicolas Bouchard, David Warde-Farley, and Yoshua Bengio. 2012. Theano: new features and speed im- provements. arXiv preprint arXiv:1211.5590."
+    },
+    {
+      "doi": "",
+      "text": "Large scale distributed deep networks. Jeffrey Dean, Greg Corrado, Rajat Monga, Kai Chen, Matthieu Devin, Mark Mao, Andrew Senior, Paul Tucker, Ke Yang, V Quoc, Le, Advances in Neural Information Processing Systems. Jeffrey Dean, Greg Corrado, Rajat Monga, Kai Chen, Matthieu Devin, Mark Mao, Andrew Senior, Paul Tucker, Ke Yang, Quoc V Le, et al. 2012. Large scale distributed deep networks. In Advances in Neural Information Processing Systems, pages 1223-1231."
+    },
+    {
+      "doi": "",
+      "text": "Hemi: a toolkit for illustrating heatmaps. Wankun Deng, Yongbo Wang, Zexian Liu, Han Cheng, Yu Xue, PloS one. 911111988Wankun Deng, Yongbo Wang, Zexian Liu, Han Cheng, and Yu Xue. 2014. Hemi: a toolkit for illustrating heatmaps. PloS one, 9(11):e111988."
+    },
+    {
+      "doi": "",
+      "text": "Adaptive recursive neural network for target-dependent twitter sentiment classification. Li Dong, Furu Wei, Chuanqi Tan, Duyu Tang, Ming Zhou, Ke Xu, ACL. Li Dong, Furu Wei, Chuanqi Tan, Duyu Tang, Ming Zhou, and Ke Xu. 2014. Adaptive recursive neural network for target-dependent twitter sentiment classi- fication. In ACL (2), pages 49-54."
+    },
+    {
+      "doi": "",
+      "text": "Adaptive subgradient methods for online learning and stochastic optimization. John Duchi, Elad Hazan, Yoram Singer, The Journal of Machine Learning Research. 12John Duchi, Elad Hazan, and Yoram Singer. 2011. Adaptive subgradient methods for online learning and stochastic optimization. The Journal of Machine Learning Research, 12:2121-2159."
+    },
+    {
+      "doi": "arXiv:1604.00727",
+      "text": "Character-level question answering with attention. David Golub, Xiaodong He, arXiv:1604.00727arXiv preprintDavid Golub and Xiaodong He. 2016. Character-level question answering with attention. arXiv preprint arXiv:1604.00727."
+    },
+    {
+      "doi": "",
+      "text": "Teaching machines to read and comprehend. Karl Moritz Hermann, Tomas Kocisky, Edward Grefenstette, Lasse Espeholt, Will Kay, Mustafa Suleyman, Phil Blunsom, Advances in Neural Information Processing Systems. Karl Moritz Hermann, Tomas Kocisky, Edward Grefen- stette, Lasse Espeholt, Will Kay, Mustafa Suleyman, and Phil Blunsom. 2015. Teaching machines to read and comprehend. In Advances in Neural Information Processing Systems, pages 1684-1692."
+    },
+    {
+      "doi": "",
+      "text": "Long short-term memory. Sepp Hochreiter, Jürgen Schmidhuber, Neural computation. 98Sepp Hochreiter and Jürgen Schmidhuber. 1997. Long short-term memory. Neural computation, 9(8):1735- 1780."
+    },
+    {
+      "doi": "",
+      "text": "Building lexicon for sentiment analysis from massive collection of html documents. Nobuhiro Kaji, Masaru Kitsuregawa, EMNLP-CoNLL. Nobuhiro Kaji and Masaru Kitsuregawa. 2007. Building lexicon for sentiment analysis from massive collection of html documents. In EMNLP-CoNLL, pages 1075- 1083."
+    },
+    {
+      "doi": "arXiv:1603.01360",
+      "text": "Guillaume Lample, Miguel Ballesteros, Sandeep Subramanian, Kazuya Kawakami, Chris Dyer, arXiv:1603.01360Neural architectures for named entity recognition. arXiv preprintGuillaume Lample, Miguel Ballesteros, Sandeep Subra- manian, Kazuya Kawakami, and Chris Dyer. 2016. Neural architectures for named entity recognition. arXiv preprint arXiv:1603.01360."
+    },
+    {
+      "doi": "",
+      "text": "Synthesis lectures on human language technologies. Bing Liu, 5Sentiment analysis and opinion miningBing Liu. 2012. Sentiment analysis and opinion mining. Synthesis lectures on human language technologies, 5(1):1-167."
+    },
+    {
+      "doi": "",
+      "text": "Recurrent neural network based language model. Tomas Mikolov, Martin Karafiát, Lukas Burget, Jan Cernockỳ, Sanjeev Khudanpur, INTERSPEECH. 23Tomas Mikolov, Martin Karafiát, Lukas Burget, Jan Cernockỳ, and Sanjeev Khudanpur. 2010. Re- current neural network based language model. In INTERSPEECH, volume 2, page 3."
+    },
+    {
+      "doi": "",
+      "text": "Distributed representations of words and phrases and their compositionality. Tomas Mikolov, Ilya Sutskever, Kai Chen, Greg S Corrado, Jeff Dean, Advances in Neural Information Processing Systems. Tomas Mikolov, Ilya Sutskever, Kai Chen, Greg S Cor- rado, and Jeff Dean. 2013. Distributed representa- tions of words and phrases and their compositional- ity. In Advances in Neural Information Processing Systems, pages 3111-3119."
+    },
+    {
+      "doi": "",
+      "text": "Recurrent models of visual attention. Volodymyr Mnih, Nicolas Heess, Alex Graves, Advances in Neural Information Processing Systems. Volodymyr Mnih, Nicolas Heess, Alex Graves, et al. 2014. Recurrent models of visual attention. In Advances in Neural Information Processing Systems, pages 2204-2212."
+    },
+    {
+      "doi": "arXiv:1308.6242",
+      "text": "Nrc-canada: Building the state-of-theart in sentiment analysis of tweets. M Saif, Svetlana Mohammad, Xiaodan Kiritchenko, Zhu, arXiv:1308.6242arXiv preprintSaif M Mohammad, Svetlana Kiritchenko, and Xiaodan Zhu. 2013. Nrc-canada: Building the state-of-the- art in sentiment analysis of tweets. arXiv preprint arXiv:1308.6242."
+    },
+    {
+      "doi": "",
+      "text": "Sentiment analysis using support vector machines with diverse information sources. Tony Mullen, Nigel Collier, EMNLP. 4Tony Mullen and Nigel Collier. 2004. Sentiment analy- sis using support vector machines with diverse infor- mation sources. In EMNLP, volume 4, pages 412- 418."
+    },
+    {
+      "doi": "",
+      "text": "Sentiment analysis: Capturing favorability using natural language processing. Tetsuya Nasukawa, Jeonghee Yi, Proceedings of the 2nd international conference on Knowledge capture. the 2nd international conference on Knowledge captureACMTetsuya Nasukawa and Jeonghee Yi. 2003. Sen- timent analysis: Capturing favorability using natu- ral language processing. In Proceedings of the 2nd international conference on Knowledge capture, pages 70-77. ACM."
+    },
+    {
+      "doi": "",
+      "text": "Glove: Global vectors for word representation. Jeffrey Pennington, Richard Socher, Christopher D Manning, Proceedings of the Empiricial Methods in Natural Language Processing. the Empiricial Methods in Natural Language Processing12Jeffrey Pennington, Richard Socher, and Christopher D Manning. 2014. Glove: Global vectors for word rep- resentation. Proceedings of the Empiricial Methods in Natural Language Processing (EMNLP 2014), 12:1532-1543."
+    },
+    {
+      "doi": "",
+      "text": "Learning sentiment lexicons in spanish. Veronica Perez-Rosas, Carmen Banea, Rada Mihalcea, LREC. 1273Veronica Perez-Rosas, Carmen Banea, and Rada Mihal- cea. 2012. Learning sentiment lexicons in spanish. In LREC, volume 12, page 73."
+    },
+    {
+      "doi": "",
+      "text": "Harris Papageorgiou, Ion Androutsopoulos, and Suresh Manandhar. Maria Pontiki, Dimitris Galanis, John Pavlopoulos, Proceedings of the 8th international workshop on semantic evaluation. the 8th international workshop on semantic evaluationSemeval-2014 task 4: Aspect based sentiment analysisMaria Pontiki, Dimitris Galanis, John Pavlopoulos, Har- ris Papageorgiou, Ion Androutsopoulos, and Suresh Manandhar. 2014. Semeval-2014 task 4: Aspect based sentiment analysis. In Proceedings of the 8th international workshop on semantic evaluation (SemEval 2014), pages 27-35."
+    },
+    {
+      "doi": "",
+      "text": "Learning tag embeddings and tag-specific composition functions in recursive neural network. Qiao Qian, Bo Tian, Minlie Huang, Yang Liu, Xuan Zhu, Xiaoyan Zhu, Proceedings of the 53rd. the 53rdQiao Qian, Bo Tian, Minlie Huang, Yang Liu, Xuan Zhu, and Xiaoyan Zhu. 2015. Learning tag embed- dings and tag-specific composition functions in re- cursive neural network. In Proceedings of the 53rd"
+    },
+    {
+      "doi": "",
+      "text": "Annual Meeting of the Association for Computational Linguistics and the 7th International Joint Conference on Natural Language Processing. 1Annual Meeting of the Association for Computational Linguistics and the 7th International Joint Conference on Natural Language Processing, volume 1, pages 1365-1374."
+    },
+    {
+      "doi": "",
+      "text": "Semisupervised polarity lexicon induction. Delip Rao, Deepak Ravichandran, Proceedings of the 12th Conference of the European Chapter of the Association for Computational Linguistics. the 12th Conference of the European Chapter of the Association for Computational LinguisticsAssociation for Computational LinguisticsDelip Rao and Deepak Ravichandran. 2009. Semi- supervised polarity lexicon induction. In Proceedings of the 12th Conference of the European Chapter of the Association for Computational Linguistics, pages 675-682. Association for Computational Linguistics."
+    },
+    {
+      "doi": "arXiv:1509.06664",
+      "text": "Karl Moritz Hermann, Tomáš Kočiskỳ, and Phil Blunsom. Tim Rocktäschel, Edward Grefenstette, arXiv:1509.06664Reasoning about entailment with neural attention. arXiv preprintTim Rocktäschel, Edward Grefenstette, Karl Moritz Her- mann, Tomáš Kočiskỳ, and Phil Blunsom. 2015. Rea- soning about entailment with neural attention. arXiv preprint arXiv:1509.06664."
+    },
+    {
+      "doi": "arXiv:1509.00685",
+      "text": "M Alexander, Rush, arXiv:1509.00685Sumit Chopra, and Jason Weston. 2015. A neural attention model for abstractive sentence summarization. arXiv preprintAlexander M Rush, Sumit Chopra, and Jason We- ston. 2015. A neural attention model for ab- stractive sentence summarization. arXiv preprint arXiv:1509.00685."
+    },
+    {
+      "doi": "",
+      "text": "Semi-supervised recursive autoencoders for predicting sentiment distributions. Richard Socher, Jeffrey Pennington, H Eric, Andrew Y Huang, Christopher D Ng, Manning, Proceedings of the Conference on Empirical Methods in Natural Language Processing. the Conference on Empirical Methods in Natural Language ProcessingAssociation for Computational LinguisticsRichard Socher, Jeffrey Pennington, Eric H Huang, An- drew Y Ng, and Christopher D Manning. 2011. Semi-supervised recursive autoencoders for predict- ing sentiment distributions. In Proceedings of the Conference on Empirical Methods in Natural Language Processing, pages 151-161. Association for Computational Linguistics."
+    },
+    {
+      "doi": "",
+      "text": "Recursive deep models for semantic compositionality over a sentiment treebank. Richard Socher, Alex Perelygin, Y Jean, Jason Wu, Chuang, D Christopher, Manning, Y Andrew, Christopher Ng, Potts, EMNLP. Citeseer16311642Richard Socher, Alex Perelygin, Jean Y Wu, Jason Chuang, Christopher D Manning, Andrew Y Ng, and Christopher Potts. 2013. Recursive deep models for semantic compositionality over a sentiment treebank. In EMNLP, volume 1631, page 1642. Citeseer."
+    },
+    {
+      "doi": "arXiv:1503.00075",
+      "text": "Improved semantic representations from tree-structured long short-term memory networks. Kai Sheng Tai, Richard Socher, Christopher D Manning, arXiv:1503.00075arXiv preprintKai Sheng Tai, Richard Socher, and Christopher D Manning. 2015. Improved semantic representa- tions from tree-structured long short-term memory networks. arXiv preprint arXiv:1503.00075."
+    },
+    {
+      "doi": "arXiv:1512.01100",
+      "text": "Target-dependent sentiment classification with long short term memory. Duyu Tang, Bing Qin, Xiaocheng Feng, Ting Liu, arXiv:1512.01100arXiv preprintDuyu Tang, Bing Qin, Xiaocheng Feng, and Ting Liu. 2015a. Target-dependent sentiment classifica- tion with long short term memory. arXiv preprint arXiv:1512.01100."
+    },
+    {
+      "doi": "",
+      "text": "Document modeling with gated recurrent neural network for sentiment classification. Duyu Tang, Bing Qin, Ting Liu, Proceedings of the 2015 Conference on Empirical Methods in Natural Language Processing. the 2015 Conference on Empirical Methods in Natural Language ProcessingDuyu Tang, Bing Qin, and Ting Liu. 2015b. Docu- ment modeling with gated recurrent neural network for sentiment classification. In Proceedings of the 2015 Conference on Empirical Methods in Natural Language Processing, pages 1422-1432."
+    },
+    {
+      "doi": "arXiv:1512.05193",
+      "text": "Abcnn: Attention-based convolutional neural network for modeling sentence pairs. Wenpeng Yin, Hinrich Schütze, Bing Xiang, Bowen Zhou, arXiv:1512.05193arXiv preprintWenpeng Yin, Hinrich Schütze, Bing Xiang, and Bowen Zhou. 2015. Abcnn: Attention-based convolutional neural network for modeling sentence pairs. arXiv preprint arXiv:1512.05193."
+    }
+  ],
+  "parsed_external_ids": {
+    "acl": "D16-1058",
+    "arxiv": null,
+    "dblp": "conf/emnlp/WangHZZ16",
+    "doi": "10.18653/v1/d16-1058",
+    "mag": 2562607067.0,
+    "pubmed": null,
+    "pubmedcentral": null
+  },
+  "source": {
+    "open_access": {
+      "license": "CCBY",
+      "status": "HYBRID",
+      "url": "https://www.aclweb.org/anthology/D16-1058.pdf"
+    },
+    "pdf_sha": "82bb306038446302cedd20fa986d20640ed88a2e",
+    "pdf_urls": [
+      "https://www.aclweb.org/anthology/D16-1058.pdf"
+    ]
+  },
+  "pdf_urls": [
+    "https://www.aclweb.org/anthology/D16-1058.pdf"
+  ],
+  "pdf_sha": "82bb306038446302cedd20fa986d20640ed88a2e",
+  "open_access": {
+    "license": "CCBY",
+    "status": "HYBRID",
+    "url": "https://www.aclweb.org/anthology/D16-1058.pdf"
+  },
+  "license": "CCBY",
+  "open_access_url": "https://www.aclweb.org/anthology/D16-1058.pdf",
+  "open_access_status": "HYBRID",
+  "metadata_title": "Attention-based LSTM for Aspect-level Sentiment Classification",
+  "metadata_authors": [
+    {
+      "authorId": 6285226.0,
+      "name": "Yequan Wang"
+    },
+    {
+      "authorId": 1730108.0,
+      "name": "Minlie Huang"
+    },
+    {
+      "authorId": 145213540.0,
+      "name": "Xiaoyan Zhu"
+    },
+    {
+      "authorId": 2116547240.0,
+      "name": "Li Zhao"
+    }
+  ],
+  "publicationdate": "2016-11-01",
+  "influentialcitationcount": 264,
+  "citationcount": 1969,
+  "year": 2016,
+  "publicationvenueid": "41bf9ed3-85b3-4c90-b015-150e31690253",
+  "publicationtypes": [
+    "JournalArticle",
+    "Conference"
+  ],
+  "metadata_externalids": {
+    "ACL": "D16-1058",
+    "ArXiv": null,
+    "CorpusId": 18993998,
+    "DBLP": "conf/emnlp/WangHZZ16",
+    "DOI": "10.18653/v1/D16-1058",
+    "MAG": 2562607067.0,
+    "PubMed": null,
+    "PubMedCentral": null
+  },
+  "PubMedCentral": null,
+  "PubMed": null,
+  "MAG": 2562607067.0,
+  "DOI": "10.18653/v1/D16-1058",
+  "CorpusId": 18993998,
+  "ArxIv": null,
+  "DBLP": "conf/emnlp/WangHZZ16",
+  "ACL": "D16-1058",
+  "referencecount": 37,
+  "venue": "Conference on Empirical Methods in Natural Language Processing",
+  "journal": {
+    "name": null,
+    "pages": "606-615",
+    "volume": null
+  },
+  "volume": null,
+  "pages": "606-615",
+  "name": null,
+  "isopenaccess": true,
+  "url": "https://www.semanticscholar.org/paper/82bb306038446302cedd20fa986d20640ed88a2e",
+  "fieldofstudy_source": "s2-fos-model",
+  "fieldofstudy_category": "Computer Science",
+  "rn": 1,
+  "explicit_gpu_hours": "None specified",
+  "estimated_gpu_hours": "None specified",
+  "number_gpu": "None specified",
+  "gpu_type": "None specified",
+  "training_details": "batch size of 25 examples, momentum of 0.9, L2-regularization weight of 0.001 and initial learning rate of 0.01 for AdaGrad",
+  "reasoning": "None specified",
+  "summary": "The paper presents an Attention-based Long Short-Term Memory (LSTM) Network for aspect-level sentiment classification, highlighting the importance of correlating the sentiment polarity of a sentence with the concerned aspect. The attention mechanism allows the model to focus on different parts of sentences based on the input aspect. Evaluations are conducted on the SemEval 2014 dataset, revealing that the proposed model achieves state-of-the-art performance. Contributions include the introduction of attention-based mechanisms for sentiment classification, the use of aspect embeddings, and methods to incorporate aspect information into LSTM model parameters. The paper discusses related work in sentiment analysis and neural network applications, models the LSTM architecture, and details the training process using backpropagation and supervised learning techniques. Results demonstrate improved performance over baseline models, showcasing the efficacy of the attention mechanism in aspect-level classification tasks.",
+  "classification": "Application Paper",
+  "methods": "[\"Attention mechanism\", \"LSTM\"]",
+  "results": "[\"State-of-the-art performance on aspect-level sentiment classification\"]",
+  "models": "[\"Attention-based LSTM\", \"AE-LSTM\", \"ATAE-LSTM\"]",
+  "datasets": "[\"SemEval 2014 Task 4\"]",
+  "metrics": "[\"Accuracy\"]",
+  "limitations": null,
+  "train_row_index": 288288,
+  "stratum": "high_gt100"
+}

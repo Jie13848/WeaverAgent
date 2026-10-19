@@ -1,0 +1,352 @@
+{
+  "corpus_id": 53223679,
+  "parsed_title": "OpenKE: An Open Toolkit for Knowledge Embedding",
+  "parsed_authors": [
+    "Xu Han \nDepartment of Computer Science and Technology\nTsinghua University\nBeijingChina\n\nInstitute for Artificial Intelligence\nTsinghua University\nBeijingChina\n\nState Key Lab on Intelligent Technology and Systems\nTsinghua University\nBeijingChina",
+    "Shulin Cao \nInstitute for Artificial Intelligence\nTsinghua University\nBeijingChina\n\nState Key Lab on Intelligent Technology and Systems\nTsinghua University\nBeijingChina\n\nKnowledge Engineering Laboratory\nTsinghua University\nBeijingChina\n\nCollege of Information Science and Technology\nBeijing Normal University\nBeijingChina",
+    "Xin Lv \nDepartment of Computer Science and Technology\nTsinghua University\nBeijingChina\n\nKnowledge Engineering Laboratory\nTsinghua University\nBeijingChina",
+    "Yankai Lin \nDepartment of Computer Science and Technology\nTsinghua University\nBeijingChina\n\nInstitute for Artificial Intelligence\nTsinghua University\nBeijingChina\n\nState Key Lab on Intelligent Technology and Systems\nTsinghua University\nBeijingChina",
+    "Zhiyuan Liu \nDepartment of Computer Science and Technology\nTsinghua University\nBeijingChina\n\nInstitute for Artificial Intelligence\nTsinghua University\nBeijingChina\n\nState Key Lab on Intelligent Technology and Systems\nTsinghua University\nBeijingChina",
+    "Maosong Sun \nDepartment of Computer Science and Technology\nTsinghua University\nBeijingChina\n\nInstitute for Artificial Intelligence\nTsinghua University\nBeijingChina\n\nState Key Lab on Intelligent Technology and Systems\nTsinghua University\nBeijingChina",
+    "Juanzi Li \nDepartment of Computer Science and Technology\nTsinghua University\nBeijingChina\n\nKnowledge Engineering Laboratory\nTsinghua University\nBeijingChina"
+  ],
+  "abstract": "We release an open toolkit for knowledge embedding (OpenKE), which provides a unified framework and various fundamental models to embed knowledge graphs into a continuous low-dimensional space. OpenKE prioritizes operational efficiency to support quick model validation and large-scale knowledge representation learning. Meanwhile, OpenKE maintains sufficient modularity and extensibility to easily incorporate new models into the framework. Besides the toolkit, the embeddings of some existing large-scale knowledge graphs pre-trained by OpenKE are also available, which can be directly applied for many applications including information retrieval, personalized recommendation and question answering. The toolkit, documentation, and pre-trained embeddings are all released on http://openke.thunlp.org/.",
+  "sections": [
+    {
+      "content": "People construct various large-scale knowledge graphs (KGs) to organize structured knowledge about the world, such as WordNet (Miller, 1995), Freebase (Bollacker et al., 2008) and Wikidata (Vrandečić and Krötzsch, 2014). Most KGs are typically organized in the form of triples (h, r, t), with h and t indicating head and tail entities, and r indicating the relation between h and t, e.g., (Mark Twain, PlaceOfBirth, Florida). Abundant structured information in KGs is widely used to enhance various knowledge-driven NLP applications (e.g., information retrieval, question answering and dialogue system) with the ongoing effective construction of KGs.\nLimited by the scale and sparsity of KGs, we have to represent KGs with corresponding distributed representations. Therefore, a variety of * indicates equal contribution † Corresponding author: Z. Liu(liuzy@tsinghua.edu.cn) knowledge embedding (KE) approaches have been proposed to embed both entities and relations in KGs into a continuous low-dimensional space, such as linear models (Bordes et al., 2011(Bordes et al., , 2014, latent factor models (Sutskever et al., 2009;Jenatton et al., 2012;Liu et al., 2017), neural models (Socher et al., 2013;Dong et al., 2014), matrix factorization models (Nickel et al., 2011(Nickel et al., , 2012(Nickel et al., , 2016Trouillon et al., 2016), and translation models (Bordes et al., 2013;Wang et al., 2014;Lin et al., 2015;Ji et al., 2015). These models have achieved great performance on benchmark datasets. However, there exist two main issues which may lead to difficulty in full utilization and further development. On the one hand, the existing implementations are scattered and unsystematic to some extent. For example, the interfaces of these model implementations are inconsistent with each other. On the other hand, these model implementations mainly focus on model validation and are often time-consuming, which makes it difficult to apply them for realworld applications. Hence, it becomes urgent to develop an efficient and effective open toolkit for KE, which will definitely benefit both the communities in academia and industry. For this purpose, we develop an open KE toolkit named \"OpenKE\". The toolkit provides a flexible framework and unified interfaces for developing KE models. While taking in some training and computing optimization methods, OpenKE makes KE models efficient and capable of embedding large-scale KGs. The features of OpenKE are threefold:\n(1) At the data and memory level, the unified framework of OpenKE manages data and memory for KE models. Model developments based on OpenKE no longer require complicated data processing and memory allocation.\n(2) At the algorithm level, OpenKE unifies the mathematical forms of various specific models to",
+      "title": "Introduction"
+    },
+    {
+      "content": "Scoring Function Parameters Loss Function RESCAL (Nickel et al., 2011) h Mrt Mr ∈ R k×k , h ∈ R k , t ∈ R k margin-based loss TransE (Bordes et al., 2013)\nTransH (Wang et al., 2014)\nTransR (Lin et al., 2015) − Mrh + r − Mrt L1/L2 Mr ∈ R kr ×ke , r ∈ R kr , h ∈ R ke , t ∈ R ke margin-based loss TransD (Ji et al., 2015) − (rph p + I)h + r − (rpt p + I)t L1/L2 rp ∈ R kr , hp ∈ R ke , tp ∈ R ke , I ∈ R kr ×ke , r ∈ R kr , h ∈ R ke , t ∈ R ke margin-based loss\nDistMult  < h, r, t > r ∈ R k , h ∈ R k , t ∈ R k logistic loss\nHolE (Nickel et al., 2016)\nComplEx (Trouillon et al., 2016) (< h, r, t >) r ∈ C k , h ∈ C k , t ∈ C k logistic loss Table 1: The brief introduction of some typical KE models. For most models, k is the dimension of both entities and relations. For some other models, K e is the dimension of entities and k r is the dimension of relations. F denotes the Fourier transform. denotes the element-wise product. < a, b, c > denotes the element-wise multi-linear dot product.\nimplement them under the unified framework. We also propose a novel negative sampling strategy for further acceleration.\n(3) At the computation level, OpenKE can separate a large-scale KG into several parts and adapt KE models for parallel training. Based on the underlying management of data and memory, we also adopt TensorFlow (Abadi et al., 2016) and Py-Torch (Paszke et al., 2017) to build a convenient platform to run models on GPUs.\nBesides the toolkit, we also provide the pretrained embeddings of several well-known largescale KGs, which can be used directly for other relevant works without repeatedly spending much time for embedding KGs. In this paper, we mainly present the architecture design and implementation of OpenKE, as well as the benchmark evaluation results of some typical KE models implemented with OpenKE. Other related resources and details can be found on http://openke. thunlp.org/.",
+      "title": "Model"
+    },
+    {
+      "content": "For a typical KG G, it expresses data as a directed graph G = {E, R, T }, where E, R and T indicate the sets of entities, relations and facts respectively. Each triple (h, r, t) ∈ T indicates there is a relation r ∈ R between h ∈ E and t ∈ E. For the entities h, t ∈ E and the relation r ∈ R, we use the bold face h, t, r to indicate their low-dimensional vectors respectively.\nFor any entity pair (h, t) ∈ E × E and any relation r ∈ R, we can determine whether there is a fact (h, r, t) ∈ T via their low-dimensional embeddings learned by KE models. These embeddings greatly facilitate understanding and mining knowledge in KGs. In practice, the KE models define a scoring function S(h, r, t) for each triple (h, r, t). In most cases, there are only true triples in KGs and non-existing triples can be either false or missing. Local closed world assumption (Dong et al., 2014) has been proposed to solve this problem, which requires existing triples to have higher scores than those non-existing ones. Hence, the scoring function S(h, r, t) returns a higher score if (h, r, t) is true, vice versa.\nBased on the above-mentioned scoring functions, some KE models formalize a margin-based loss as the training objective to learn embeddings of the entities and relations:\nHere [x] + indicates keeping the positive part of x and γ > 0 is a margin. T denotes the set of nonexisting triples, which is constructed by corrupting entities and relations in existing triples,\nSome other KE models cast the training objective as a classification task. The embeddings of the entities and relations can be learned by minimizing the regularized logistic loss,\nThe main difference among various KE models is scoring functions. Hence, we briefly introduce several typical models and their scoring functions in Table 1. These models are state-of-the-art and widely introduced in many works. We systematically incorporate all of them into our OpenKE.",
+      "title": "Background"
+    },
+    {
+      "content": "Before introducing the concrete toolkit implementations, we report the design goals and features of OpenKE, including system encapsulation, operational efficiency, and model extensibility.",
+      "title": "Design Goals"
+    },
+    {
+      "content": "Developers tend to maximize the reuse of code to avoid unnecessary redundant development in practice. For KE, its task is fixed, and its experimental settings and model parameters are also similar. However, previous model implementations are scattered and lack of necessary interface encapsulation. Thus, developers have to spend extra time reading obscure open-source code and writing glue code for data processing when they construct models. In view of this issue, we build a unified underlying platform in OpenKE and encapsulate various data and memory processing which is independent of model implementations. As is shown in Figure 1, the system encapsulation makes it easy to train and test KE models. Thus, we just need to set hyperparameters via interfaces of the platform to construct KE models.",
+      "title": "Encapsulation"
+    },
+    {
+      "content": "Previous model implementations focus on model validation and enhancing experimental results rather than improving time and space efficiency. In fact, as real-world KGs can be very large, training efficiency is an important concern. Hence, OpenKE integrates efficient computing power, training methods, and various acceleration strategies to support KE models. We adopt TensorFlow and PyTorch to implement the model training and test modules based on the interfaces of underlying platform. These machine learning frameworks enable models to be run on GPU, with just few minutes needed for training and testing models on benchmark datasets. In order to train existing large-scale KGs, we also implement lightweight C/C++ versions for quick deployment and multithreading acceleration of KE models, in which some models (e.g. TransE) can embed more than 100M triples in a few hours on ordinary devices.",
+      "title": "Efficiency"
+    },
+    {
+      "content": "Since different KE models have different design solutions, we make OpenKE fully extensible to future variants. For the underlying platform, we encapsulate data processing and memory manage-import config, Models, os os.environ['CUDA_VISIBLE_DEVICES']='0' con = config.Config() con.set_in_path('./FB15K/') con.set_work_threads(8) con.set_train_times(1000) con.set_alpha(0.001) con.set_margin(1.0) con.set_dimension(100) con.set_opt_method('SGD') con.init() con.set_model(models.TransE) con.run() 1, keep_dims = True) self.loss = tf.reduce_sum(tf.maximum(p_score -n_score + config.margin, 0)) ... ment, and then provide various data sampling interfaces. For the training modules, we provide enough interfaces for possible training methods. For the construction of KE models, we unify their mathematical forms and encapsulate them into a base class. These framework designs can greatly meet the needs of current and future models, and customized interfaces to meet individual requirements are also available in OpenKE. As shown in Figure 2, all specific models are implemented by inheriting the base class with designing their own scoring functions and loss functions. In addition, models in OpenKE can be placed into the framework of TensorFlow and PyTorch to interact with other machine learning models.",
+      "title": "Extensibility"
+    },
+    {
+      "content": "",
+      "title": "Embeddings"
+    },
+    {
+      "content": "In this section, we mainly present the implementations of acceleration modules and special sampling algorithm in OpenKE. OpenKE has been available to the public on GitHub 1 and is opensource under the MIT license.",
+      "title": "Implementations"
+    },
+    {
+      "content": "Require: Entity and relation sets E and R, training triples T = {(h, r, t)}. 1: Initialize all model embeddings and parameters. 2: for i ← 1 to epoches do 3:\nIn each thread: 4:\nfor j ← 1 to batches/threads do 5:\nSample a positive triple (h, r, t) 6:\nSample a corrupted triple (h , r , t ) 7:\nCompute the loss function L 8:\nUpdate the gradient ∇L 9: end for 10: end for 11: Return all embeddings and parameters",
+      "title": "Algorithm 1 Parallel Learning"
+    },
+    {
+      "content": "GPUs are widely used in machine learning tasks to speed up model training in recent years. In order to accelerate KE models, we integrate GPU learning mechanisms into OpenKE. We build the GPU learning platform based on TensorFlow (branch master) and PyTorch (branch OpenKE-PyTorch). Both TensorFlow and PyTorch are machine learning libraries, providing effective hardware optimizations and abundant arithmetic operators for convenient model constructions, especially the stable environments for GPU learning. The autograd packages also bring additional convenience. TensorFlow and PyTorch enable us to coustruct models without manual back propagation implementations, further reducing the programming complexity for GPU Learning. We develop necessary encapsulation modules aligning to Tensor-Flow and PyTorch so that the development and deployment of KE models can be faster and further convenient. Models can be deployed easily on a variety of devices without implementing complicated device setting code, even for multiple GPUs.",
+      "title": "GPU Learning"
+    },
+    {
+      "content": "Abundant computing resources (e.g Servers with multiple GPUs) do not exist all the time. In fact, we often rely on simple personal computers for model validation. Hence, we enable OpenKE to adapt models for parallel learning on CPU 2 besides employing GPU learning, which allow users to make full use of all available computing resources. The parallel learning method is shown in Algorithm 1. The main idea of parallel learning method is based on data parallelism mechanism, which divides training triples into several parts and trains each part of triples with a corresponding thread. In parallel learning, there are two strategies implemented to update gradients. One of the methods is the lock-free strategy, which means all threads share the unified embedding space and update embeddings directly without synchronized operations. We also implement a central synchronized method, where each thread calculates its own gradient and results will be updated after summing up the gradients from all threads.",
+      "title": "Parallel Learning"
+    },
+    {
+      "content": "All KE models learn their parameters by minimizing the margin-based loss function Eq. (1) or the regularized logistic loss Eq. (3). Both of these loss functions need to construct non-existing triples as negative samples. We have empirically found that the corrupted triples have great influence on final performance. Randomly replacing entities or relations with any other ones may make the negative triple set T contain some positive triples in T , which would weaken the performance of KE models. The original sampling algorithm will spend much time checking whether generated triples are in T and filtering them out. In OpenKE, we propose an offset-based negative sampling algorithm to generate negative triples. As shown in Figure 3, we renumber all entities with new serial numbers. Each entity's new number is obtained by adding an offset to its original ID, and the offset is the total number of positive entities which have lower IDs. Our algorithm first randomly sample a new number and then map the new number back to its corresponding entity. This algorithm can directly generate negative triples without any checking. Since the relation set is very small, we still directly replace positive relations for relation corruption.",
+      "title": "Offset-based Negative Sampling"
+    },
+    {
+      "content": "Link prediction has been widely used for evaluating KE models, which needs to predict the tail entity when given a triple (h, r, ?) or predict the   head entity when given a triple (?, r, t). In order to evaluate OpenKE, we implement various KE models with OpenKE, and compare their performance with previous works on link prediction task. Some datasets are usually used as benchmarks for link prediction, such as FB15K and WN18. FB15K is the relatively dense subgraph of Freebase; WN18 is the subset of WordNet. These public datasets are available online 3 . Following previous works, We adopt them in our experiments. The statistics of FB15K and WN18 are listed in Table 2, including the number of entities, relations, and facts.\nAs mentioned above, OpenKE supports models with efficient learning on both CPU and GPU. For CPU, the benchmarks are run on an Intel(R) Core(TM) i7-6700K @ 3.70GHz, with 4 cores and 8 threads. For GPU, the models in both TensorFlow and PyTorch versions are trained by GeForce GTX 1070 (Pascal), with CUDA v.8.0 (driver 384.111) and cuDNN v.6.5. To compare with the previous works, we simply follow the parameter settings used before and traverse all training triples for 1000 rounds. Other detailed parameters and training strategies are shown in our source code. We show these results in Table 3 and  Table 4. In these tables, the difference between our implementations and the paper reported results are listed in the parentheses. To demonstrate the efficiency of OpenKE, we select TransE as a representative and implement it with both OpenKE and KB2E 4 , and then compare their training time. KB2E is a widely-used toolkit for KE models on GitHub. These results can be found in Table 5.   From the results in Table 3, Table 4 and Table  5, we observe that: (1) Models implemented with OpenKE have the comparable accuracies compared to the values reported in the original papers. These results are compatible with our expectations. For some models, their accuracies are slightly higher due to OpenKE. These results indicate our toolkit is effecive. (2) OpenKE significantly accelerates the training process of the models trained both on CPU and GPU. As compared to the model implemented with KB2E, all models in OpenKE achieve more than 10× speedup. These results show that our toolkit is efficient.\nThe evaluation results indicate that our toolkit significantly handles the time-consuming problem and can support existing models to learn largescale KGs. In fact, TransE based on OpenKE only spends about 18 hours training the whole Wikidata for 10000 rounds and gets stable embeddings. There are more than 40M entities and 100M facts in Wikidata. We also evaluate the embeddings learned on the whole Wikidata on the link prediction task. Because the whole Wikidata is quite huge, we emphasize link prediction of Wikidata more on ranking a set of candidate entities rather than requiring one best answer. Hence, we report the proportion of correct entities in top-N ranked entities (Hits@10, Hits@20, Hits@50 and Hits@100) in Table 6. To our best knowledge, this is the first time that adopting KE models to embed an existing large-scale KG. The results shown in Table 6 indicate that OpenKE enables models to effectively and efficiently embed large-scale KGs.",
+      "title": "Evaluations"
+    },
+    {
+      "content": "We propose an efficient open toolkit OpenKE for knowledge embedding. OpenKE builds a unified underlying platform to organize data and memory. It also applies GPU learning and parallel learning to speed up training. We also unify mathematical forms for specific models and encapsulate them to maintain enough modularity and extensibility. Experimental results demonstrate that the models implemented by OpenKE are efficient and effective.\nIn the future, we will incorporate more knowledge embedding models and maintain the stable embeddings of some large-scale knowledge graphs.",
+      "title": "Conclusion"
+    },
+    {
+      "content": "",
+      "title": "Figure 2 :"
+    },
+    {
+      "content": "",
+      "title": "Figure 3 :"
+    },
+    {
+      "content": "",
+      "title": "Table 2 :"
+    },
+    {
+      "content": "",
+      "title": "Table 3 :"
+    },
+    {
+      "content": "",
+      "title": "Table 4 :"
+    },
+    {
+      "content": "",
+      "title": "Table 5 :"
+    },
+    {
+      "content": "",
+      "title": "Table 6 :"
+    }
+  ],
+  "figures": [
+    {
+      "caption": "An example for implementing a KE model (TransE) via OpenKE.",
+      "content": "Figure 2 :\n2An example for implementing a KE model (TransE) via OpenKE.",
+      "id": ""
+    },
+    {
+      "caption": "An example for the offset-based negative sampling algorithm.",
+      "content": "Figure 3 :\n3An example for the offset-based negative sampling algorithm.",
+      "id": ""
+    },
+    {
+      "caption": "tf.reduce_sum(tf.reduce_mean(_n_score, 1, keep_dims = False),",
+      "content": "tf.reduce_sum(tf.reduce_mean(_n_score, 1, keep_dims = False),Datasets \nMemory \n\nUnderlying Management \n\nModel \nParameters \n\nTraining \nStrategies \n\nModel Settings \n\nTraining \nEvaluation \n\nTraning and Evaluation \n\nCode \nOpenKE \n\nFigure 1: An example for training a KE model \n(TransE) via OpenKE. \n\nimport numpy as np \nimport tensorflow as tf \nfrom Model import * \nclass TransE(Model): \ndef _calc(self, h, t, r): \nreturn abs(h + r -t) \ndef embedding_def(self): \nconfig = self.get_config() \nself.ent_embeddings = tf.get_variable('ent_embeddings', \n[config.entTotal, config.hidden_size]) \nself.rel_embeddings = tf.get_variable('rel_embeddings', \n[config.relTotal, config.hidden_size]) \n... \ndef loss_def(self): \nconfig = self.get_config() \npos_h, pos_t, pos_r = self.get_positive_instance(in_batch = True) \nneg_h, neg_t, neg_r = self.get_negative_instance(in_batch = True) \np_h = tf.nn.embedding_lookup(self.ent_embeddings, pos_h) \np_t = tf.nn.embedding_lookup(self.ent_embeddings, pos_t) \np_r = tf.nn.embedding_lookup(self.rel_embeddings, pos_r) \nn_h = tf.nn.embedding_lookup(self.ent_embeddings, neg_h) \nn_t = tf.nn.embedding_lookup(self.ent_embeddings, neg_t) \nn_r = tf.nn.embedding_lookup(self.rel_embeddings, neg_r) \n_p_score = self._calc(p_h, p_t, p_r) \n_n_score = self._calc(n_h, n_t, n_r) \np_score = tf.reduce_sum(tf.reduce_mean(_p_score, 1, keep_dims = False), \n1, keep_dims = True) \nn_score =",
+      "id": ""
+    },
+    {
+      "caption": "Statistics of FB15K and WN18.",
+      "content": "Table 2 :\n2Statistics of FB15K and WN18.Datasets \nFB15K \nModels \nTF \nPT \nMT \n\nTransE \n75.6(+28.5) 75.4(+28.3) 74.3(+27.2) \nTransH \n72.8(+14.3) 72.7(+14.2) 74.8(+16.3) \nTransR \n74.9(+6.2) \n75.7(+7.0) \n75.6(+6.9) \nTransD \n74.3(+0.1) \n74.2(+0.0) \n75.2(+1.0) \nRESCAL 49.1(+5.0) \n57.2(+13.1) \n-\nDistMult \n73.4(+15.7) 75.4(+17.4) \n-\nHolE \n70.4(−3.5) \n-\n-\nComplEx 72.3(−11.7) 80.5(−3.5) \n-",
+      "id": ""
+    },
+    {
+      "caption": "Experimental results of link prediction on WN18 (%).",
+      "content": "Table 3 :\n3Experimental results of link prediction on \nFB15K (%).",
+      "id": ""
+    },
+    {
+      "caption": "Training time of different implementations of TransE on FB15K.",
+      "content": "Table 4 :\n4Experimental results of link prediction on WN18 (%).Models \nTime (s) \n\nTransE (KB2E, CPU) \n7124 \nTransE (OpenKE, CPU, 1-Thread) \n386 \nTransE (OpenKE, CPU, 2-Thread ) \n206 \nTransE (OpenKE, CPU, 4-Thread) \n118 \nTransE (OpenKE, CPU, 8-Thread) \n76 \nTransE (OpenKE, GPU, TensorFlow) \n178 \nTransE (OpenKE, GPU, PyTorch) \n266",
+      "id": ""
+    },
+    {
+      "caption": "Experimental results of link prediction on the whole Wikidata.",
+      "content": "Table 5 :\n5Training time of different implementations of TransE on FB15K.",
+      "id": ""
+    }
+  ],
+  "references": [
+    {
+      "doi": "",
+      "text": "Tensorflow: A system for large-scale machine learning. Martín Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen, Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey Irving, Michael Isard, Proceedings of OSDI. OSDIMartín Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen, Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghe- mawat, Geoffrey Irving, Michael Isard, et al. 2016. Ten- sorflow: A system for large-scale machine learning. In Proceedings of OSDI."
+    },
+    {
+      "doi": "",
+      "text": "Freebase: a collaboratively created graph database for structuring human knowledge. Kurt Bollacker, Colin Evans, Praveen Paritosh, Tim Sturge, Jamie Taylor, Proceedings of KDD. KDDKurt Bollacker, Colin Evans, Praveen Paritosh, Tim Sturge, and Jamie Taylor. 2008. Freebase: a collaboratively cre- ated graph database for structuring human knowledge. In Proceedings of KDD."
+    },
+    {
+      "doi": "",
+      "text": "Joint learning of words and meaning representations for open-text semantic parsing. Antoine Bordes, Xavier Glorot, Jason Weston, Yoshua Bengio, Proceedings of AISTATS. AISTATSAntoine Bordes, Xavier Glorot, Jason Weston, and Yoshua Bengio. 2012. Joint learning of words and meaning repre- sentations for open-text semantic parsing. In Proceedings of AISTATS."
+    },
+    {
+      "doi": "",
+      "text": "A semantic matching energy function for learning with multi-relational data. Antoine Bordes, Xavier Glorot, Jason Weston, Yoshua Bengio, Proceedings of ML. MLAntoine Bordes, Xavier Glorot, Jason Weston, and Yoshua Bengio. 2014. A semantic matching energy function for learning with multi-relational data. Proceedings of ML."
+    },
+    {
+      "doi": "",
+      "text": "Translating embeddings for modeling multi-relational data. Antoine Bordes, Nicolas Usunier, Alberto Garcia-Duran, Jason Weston, Oksana Yakhnenko, Proceedings of NIPS. NIPSAntoine Bordes, Nicolas Usunier, Alberto Garcia-Duran, Ja- son Weston, and Oksana Yakhnenko. 2013. Translating embeddings for modeling multi-relational data. In Pro- ceedings of NIPS."
+    },
+    {
+      "doi": "",
+      "text": "Learning structured embeddings of knowledge bases. Antoine Bordes, Jason Weston, Ronan Collobert, Yoshua Bengio, Proceedings of AAAI. AAAIAntoine Bordes, Jason Weston, Ronan Collobert, Yoshua Bengio, et al. 2011. Learning structured embeddings of knowledge bases. In Proceedings of AAAI."
+    },
+    {
+      "doi": "",
+      "text": "Knowledge vault: A web-scale approach to probabilistic knowledge fusion. Xin Dong, Evgeniy Gabrilovich, Geremy Heitz, Wilko Horn, Ni Lao, Kevin Murphy, Thomas Strohmann, Shaohua Sun, Wei Zhang, Proceedings of KDD. KDDXin Dong, Evgeniy Gabrilovich, Geremy Heitz, Wilko Horn, Ni Lao, Kevin Murphy, Thomas Strohmann, Shaohua Sun, and Wei Zhang. 2014. Knowledge vault: A web-scale ap- proach to probabilistic knowledge fusion. In Proceedings of KDD."
+    },
+    {
+      "doi": "",
+      "text": "A latent factor model for highly multi-relational data. Rodolphe Jenatton, Nicolas L Roux, Antoine Bordes, Guillaume R Obozinski, Proceedings of NIPS. NIPSRodolphe Jenatton, Nicolas L Roux, Antoine Bordes, and Guillaume R Obozinski. 2012. A latent factor model for highly multi-relational data. In Proceedings of NIPS."
+    },
+    {
+      "doi": "",
+      "text": "Knowledge graph embedding via dynamic mapping matrix. Guoliang Ji, Shizhu He, Liheng Xu, Kang Liu, Jun Zhao, Proceedings of ACL. ACLGuoliang Ji, Shizhu He, Liheng Xu, Kang Liu, and Jun Zhao. 2015. Knowledge graph embedding via dynamic mapping matrix. In Proceedings of ACL."
+    },
+    {
+      "doi": "",
+      "text": "Learning entity and relation embeddings for knowledge graph completion. Yankai Lin, Zhiyuan Liu, Maosong Sun, Yang Liu, Xuan Zhu, Proceedings of AAAI. AAAIYankai Lin, Zhiyuan Liu, Maosong Sun, Yang Liu, and Xuan Zhu. 2015. Learning entity and relation embeddings for knowledge graph completion. In Proceedings of AAAI."
+    },
+    {
+      "doi": "",
+      "text": "Analogical inference for multi-relational embeddings. Hanxiao Liu, Yuexin Wu, Yiming Yang, Proceedings of ICML. ICMLHanxiao Liu, Yuexin Wu, and Yiming Yang. 2017. Analog- ical inference for multi-relational embeddings. In Pro- ceedings of ICML."
+    },
+    {
+      "doi": "",
+      "text": "Wordnet: a lexical database for english. A George, Miller, Communications of the ACM. George A Miller. 1995. Wordnet: a lexical database for en- glish. Communications of the ACM."
+    },
+    {
+      "doi": "",
+      "text": "Holographic embeddings of knowledge graphs. Maximilian Nickel, Lorenzo Rosasco, Tomaso Poggio, Proceedings of AAAI. AAAIMaximilian Nickel, Lorenzo Rosasco, and Tomaso Poggio. 2016. Holographic embeddings of knowledge graphs. In Proceedings of AAAI."
+    },
+    {
+      "doi": "",
+      "text": "A three-way model for collective learning on multirelational data. Maximilian Nickel, Hans-Peter Volker Tresp, Kriegel, Proceedings of ICML. ICMLMaximilian Nickel, Volker Tresp, and Hans-Peter Kriegel. 2011. A three-way model for collective learning on multi- relational data. In Proceedings of ICML."
+    },
+    {
+      "doi": "",
+      "text": "Factorizing yago: scalable machine learning for linked data. Maximilian Nickel, Hans-Peter Volker Tresp, Kriegel, Proceedings of WWW. WWWMaximilian Nickel, Volker Tresp, and Hans-Peter Kriegel. 2012. Factorizing yago: scalable machine learning for linked data. In Proceedings of WWW."
+    },
+    {
+      "doi": "",
+      "text": "Adam Paszke, Soumith Chintala, Ronan Collobert, Koray Kavukcuoglu, Clement Farabet, Samy Bengio, Iain Melvin, Jason Weston, Johnny Mariethoz, Pytorch: Tensors and dynamic neural networks in python with strong gpu acceleration. Adam Paszke, Soumith Chintala, Ronan Collobert, Ko- ray Kavukcuoglu, Clement Farabet, Samy Bengio, Iain Melvin, Jason Weston, and Johnny Mariethoz. 2017. Py- torch: Tensors and dynamic neural networks in python with strong gpu acceleration."
+    },
+    {
+      "doi": "",
+      "text": "Reasoning with neural tensor networks for knowledge base completion. Richard Socher, Danqi Chen, D Christopher, Andrew Manning, Ng, Proceedings of NIPS. NIPSRichard Socher, Danqi Chen, Christopher D Manning, and Andrew Ng. 2013. Reasoning with neural tensor networks for knowledge base completion. In Proceedings of NIPS."
+    },
+    {
+      "doi": "",
+      "text": "Modelling relational data using bayesian clustered tensor factorization. Ilya Sutskever, Joshua B Tenenbaum, Ruslan Salakhutdinov, Proceedings of NIPS. NIPSIlya Sutskever, Joshua B Tenenbaum, and Ruslan Salakhutdi- nov. 2009. Modelling relational data using bayesian clus- tered tensor factorization. In Proceedings of NIPS."
+    },
+    {
+      "doi": "",
+      "text": "Complex embeddings for simple link prediction. Théo Trouillon, Johannes Welbl, Sebastian Riedel, Éric Gaussier, Guillaume Bouchard, Proceedings of ICML. ICMLThéo Trouillon, Johannes Welbl, Sebastian Riedel,Éric Gaussier, and Guillaume Bouchard. 2016. Complex em- beddings for simple link prediction. In Proceedings of ICML."
+    },
+    {
+      "doi": "",
+      "text": "Wikidata: a free collaborative knowledgebase. Denny Vrandečić, Markus Krötzsch, Communications of the ACM. Denny Vrandečić and Markus Krötzsch. 2014. Wikidata: a free collaborative knowledgebase. Communications of the ACM."
+    },
+    {
+      "doi": "",
+      "text": "Knowledge graph embedding by translating on hyperplanes. Zhen Wang, Jianwen Zhang, Jianlin Feng, Zheng Chen, Proceedings of AAAI. AAAIZhen Wang, Jianwen Zhang, Jianlin Feng, and Zheng Chen. 2014. Knowledge graph embedding by translating on hy- perplanes. In Proceedings of AAAI."
+    },
+    {
+      "doi": "",
+      "text": "Embedding entities and relations for learning and inference in knowledge bases. Bishan Yang, Wen-Tau Yih, Xiaodong He, Jianfeng Gao, Li Deng, Proceedings of ICLR. ICLRBishan Yang, Wen-tau Yih, Xiaodong He, Jianfeng Gao, and Li Deng. 2015. Embedding entities and relations for learning and inference in knowledge bases. In Proceed- ings of ICLR."
+    }
+  ],
+  "parsed_external_ids": {
+    "acl": "D18-2024",
+    "arxiv": null,
+    "dblp": "conf/emnlp/HanCLLLSL18",
+    "doi": "10.18653/v1/d18-2024",
+    "mag": 2889583850.0,
+    "pubmed": null,
+    "pubmedcentral": null
+  },
+  "source": {
+    "open_access": {
+      "license": "CCBY",
+      "status": "HYBRID",
+      "url": "https://www.aclweb.org/anthology/D18-2024.pdf"
+    },
+    "pdf_sha": "8ab29eea2110f02802fbb1d879dc837ecb9e0b16",
+    "pdf_urls": [
+      "https://www.aclweb.org/anthology/D18-2024.pdf"
+    ]
+  },
+  "pdf_urls": [
+    "https://www.aclweb.org/anthology/D18-2024.pdf"
+  ],
+  "pdf_sha": "8ab29eea2110f02802fbb1d879dc837ecb9e0b16",
+  "open_access": {
+    "license": "CCBY",
+    "status": "HYBRID",
+    "url": "https://www.aclweb.org/anthology/D18-2024.pdf"
+  },
+  "license": "CCBY",
+  "open_access_url": "https://www.aclweb.org/anthology/D18-2024.pdf",
+  "open_access_status": "HYBRID",
+  "metadata_title": "OpenKE: An Open Toolkit for Knowledge Embedding",
+  "metadata_authors": [
+    {
+      "authorId": 48506411.0,
+      "name": "Xu Han"
+    },
+    {
+      "authorId": 3834421.0,
+      "name": "Shulin Cao"
+    },
+    {
+      "authorId": 2112413277.0,
+      "name": "Xin Lv"
+    },
+    {
+      "authorId": 2427350.0,
+      "name": "Yankai Lin"
+    },
+    {
+      "authorId": 49293587.0,
+      "name": "Zhiyuan Liu"
+    },
+    {
+      "authorId": 1753344.0,
+      "name": "Maosong Sun"
+    },
+    {
+      "authorId": 8549842.0,
+      "name": "Juan-Zi Li"
+    }
+  ],
+  "publicationdate": "2018-11-01",
+  "influentialcitationcount": 31,
+  "citationcount": 334,
+  "year": 2018,
+  "publicationvenueid": "41bf9ed3-85b3-4c90-b015-150e31690253",
+  "publicationtypes": [
+    "JournalArticle",
+    "Conference"
+  ],
+  "metadata_externalids": {
+    "ACL": "D18-2024",
+    "ArXiv": null,
+    "CorpusId": 53223679,
+    "DBLP": "conf/emnlp/HanCLLLSL18",
+    "DOI": "10.18653/v1/D18-2024",
+    "MAG": 2889583850.0,
+    "PubMed": null,
+    "PubMedCentral": null
+  },
+  "PubMedCentral": null,
+  "PubMed": null,
+  "MAG": 2889583850.0,
+  "DOI": "10.18653/v1/D18-2024",
+  "CorpusId": 53223679,
+  "ArxIv": null,
+  "DBLP": "conf/emnlp/HanCLLLSL18",
+  "ACL": "D18-2024",
+  "referencecount": 22,
+  "venue": "Conference on Empirical Methods in Natural Language Processing",
+  "journal": {
+    "name": null,
+    "pages": "139-144",
+    "volume": null
+  },
+  "volume": null,
+  "pages": "139-144",
+  "name": null,
+  "isopenaccess": true,
+  "url": "https://www.semanticscholar.org/paper/8ab29eea2110f02802fbb1d879dc837ecb9e0b16",
+  "fieldofstudy_source": "s2-fos-model",
+  "fieldofstudy_category": "Computer Science",
+  "rn": 1,
+  "explicit_gpu_hours": "18",
+  "estimated_gpu_hours": "None specified",
+  "number_gpu": "1",
+  "gpu_type": "GeForce GTX 1070 (Pascal)",
+  "training_details": "training the whole Wikidata for 10000 rounds",
+  "reasoning": "TransE based on OpenKE only spends about 18 hours training the whole Wikidata for 10000 rounds and gets stable embeddings.",
+  "summary": "The paper introduces OpenKE, an open toolkit designed for Knowledge Embedding (KE) which facilitates the embedding of knowledge graphs into low-dimensional spaces. It emphasizes operational efficiency, modularity, and extensibility, enabling quick model validation and large-scale knowledge representation learning. OpenKE provides a unified framework for various KE models while offering pre-trained embeddings for existing large-scale knowledge graphs that are applicable in domains such as information retrieval and personalized recommendation. The toolkit integrates features such as GPU learning and parallel training for enhanced performance during model training. Experimental evaluations demonstrate the effectiveness and efficiency of OpenKE in link prediction using benchmark datasets.",
+  "classification": "Application Paper",
+  "methods": "[\"Parallel Learning\", \"GPU Learning\", \"Negative Sampling\"]",
+  "results": "[\"Efficient embedding of knowledge graphs\", \"Significant speedup in training time compared to existing toolkits\", \"Comparable performance with state-of-the-art KE models in link prediction\"]",
+  "models": "[\"TransE\", \"TransH\", \"TransR\", \"TransD\", \"RESCAL\", \"DistMult\", \"HolE\", \"ComplEx\"]",
+  "datasets": "[\"FB15K\", \"WN18\"]",
+  "metrics": "[\"None specified\"]",
+  "limitations": "[\"Existing implementations of KE models are scattered and inconsistent\", \"Time-consuming for real-world applications due to validation focus\"]",
+  "train_row_index": 128344,
+  "stratum": "high_gt100"
+}

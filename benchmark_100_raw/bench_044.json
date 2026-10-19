@@ -1,0 +1,313 @@
+{
+  "corpus_id": 51871198,
+  "parsed_title": "DCFEE: A Document-level Chinese Financial Event Extraction System based on Automatically Labeled Training Data",
+  "parsed_authors": [
+    "Hang Yang hang.yang@nlpr.ia.ac.cn \nInstitute of Automation\nNational Laboratory of Pattern Recognition\nChinese Academy of Sciences\n100190BeijingChina",
+    "Yubo Chen yubo.chen@nlpr.ia.ac.cn \nInstitute of Automation\nNational Laboratory of Pattern Recognition\nChinese Academy of Sciences\n100190BeijingChina",
+    "Kang Liu kliu@nlpr.ia.ac.cn \nInstitute of Automation\nNational Laboratory of Pattern Recognition\nChinese Academy of Sciences\n100190BeijingChina\n\nUniversity of Chinese Academy of Sciences\n100049BeijingChina",
+    "Yang Xiao yang.xiao@nlpr.ia.ac.cn \nInstitute of Automation\nNational Laboratory of Pattern Recognition\nChinese Academy of Sciences\n100190BeijingChina",
+    "Jun Zhao jzhao@nlpr.ia.ac.cn \nInstitute of Automation\nNational Laboratory of Pattern Recognition\nChinese Academy of Sciences\n100190BeijingChina\n\nUniversity of Chinese Academy of Sciences\n100049BeijingChina"
+  ],
+  "abstract": "We present an event extraction framework",
+  "sections": [
+    {
+      "content": "Event Extraction (EE), a challenging task in Nature Language Processing (NLP), aims at discovering event mentions 3 and extracting events which contain event triggers 4 and event arguments 5 from texts. For example, in the sentence E1 6 as shown in Figure 1, an EE system is expected to discover an Equity Freeze event mention (E1 itself) triggered by frozen and extract the corresponding five arguments with different roles: Nagafu Ruihua (Role=Shareholder Name), 520,000 shares (Role=Num of Frozen Stock), People's Court of Dalian city (Role=Frozen Institution), May 5,2017 (Role=Freezing Start Date) and 3 years (Role=Freezing End Date). Extracting event instances from texts plays a critical role in building NLP applications such as Information Extraction (IE), Question Answer (QA) and Summarization (Ahn, 2006). Recently, researchers have built some English EE systems, such as EventRegistry 7 and Stela 8 . However, in financial domain, there is no such effective EE system, especially in Chinese.\nFinancial events are able to help users obtain competitors' strategies, predict the stock market and make correct investment decisions. For example, the occurrence of an Equity Freeze event will have a bad effect on the company and the shareholders should make correct decisions quickly to avoid the losses. In business domain, official announcements released by companies represent the occurrence of major events, such as Equity Freeze events, Equity Trading events and so on. So it is valuable to discover event mention and extract events from the announcements. However, there are two challenges in Chinese financial EE.\nLack of data: most of the EE methods usually adopted supervised learning paradigm which relies on elaborate human-annotated data, but there is no labeled corpus for EE in the Chinese financial field.\nDocument-level EE: most of the current methods of EE are concentrated on the sentence-level  Figure 1: Example of an Equity Freeze event triggered by \"frozen\" and containing five arguments.\ntext ) (Nguyen et al., 2016. But an event is usually expressed with multiple sentences in a document. In the financial domain data set constructed in this paper, there are 91% of the cases that the event arguments are distributed in the different sentences. For example, as shown in Figure 1, E1 and E2 describe an Equity Freeze event together.\nTo solve the above two problems, we present a framework named DCFEE which can extract document-level events from announcements based on automatically labeled training data. We make use of Distance Supervision (DS) which has been validated to generate labeled data for EE  to automatically generate large-scaled annotated data. We use a sequence tagging model to automatically extract sentence-level events. And then, we propose a key-event detection model and an arguments-filling strategy to extract the whole event from the document.\nIn summary, the contributions of this article are as follows:\n• We propose the DCFEE framework which can automatically generate large amounts of labeled data and extract document-level events from the financial announcements.\n• We introduce an automatic data labeling method for event extraction and give a series of useful tips for constructing Chinese financial event dataset. We propose a documentlevel EE system mainly based on a neural sequence tagging model, a key-event detection model, and an arguments-completion strategy. The experimental results show the effectiveness of it.\n• The DCFEE system has been successfully built as an online application which can quickly extract events from the financial an-nouncements 9 .  2 Methodology Figure 2 describes the architecture of our proposed DCFEE framework which primarily involves the following two components: (i) Data Generation, which makes use of DS to automatically label event mention from the whole document (document-level data) and annotate triggers and arguments from event mention (sentence-level data); (ii) EE system, which contains Sentence-level Event Extraction (SEE) supported by sentencelevel labeled data and Document-level Event Extraction (DEE) supported by document-level labeled data. In the next section, we briefly describe the generation of labeled data and architecture of the EE system. Figure 3 describes the process of labeled data generation based on the method of DS. In this section, we first introduce the data sources (structured data and unstructured data) that we use. And then we describe the method of automatically labeling data. Finally, we will introduce some tips that can be used to improve the quality of the labeled data. Data sources: two types of data resources are required to automatically generate data: a financial event knowledge database containing a lot of structured event data and unstructured text data containing event information. (i) The financial event knowledge database used in this paper is structured data which includes nine common financial event types and is stored in a table format. These structured data which contains key event arguments is summarized from the announcements by financial professionals. An Equity Pledge event is taken as an example, as shown on the left of Figure 3, in which key arguments include Shareholder Name (NAME), Pledge Institution (ORG), Number of Pledged Stock (NUM), Pledging Start Date (BEG) and Pledging End Date (END). (ii) The unstructured text data come from official announcements released by the companies which are stored in an unstructured form on the web. We obtain these textual data from Sohu securities net 10 .",
+      "title": "Introduction"
+    },
+    {
+      "content": "Method of data generation: annotation data consists of two parts: sentence-level data generated by labeling the event trigger and event arguments in the event mention; document-level data generated by labeling the event mention from the document-level announcement. Now the question is, how to find the event triggers. Event arguments and event mention that correspond to the structured event knowledge database are summarized from a mass of announcements. DS has proved its effectiveness in automatically labeling data for Relation Extraction  and Event Extraction . Inspired by D-S, we assume that one sentence contains the most event arguments and driven by a specific trigger is likely to be an event mention in an announcement. And arguments occurring in the event mention are 10 http://q.stock.sohu.com/cn/000001/gsgg.shtml likely to play the corresponding roles in the event. For each type of financial event, we construct a dictionary of event triggers such as frozen in Equity Freeze event and pledged in Equity Pledge event. So the trigger word can be automatically marked by querying the pre-defined dictionary from the announcements. through these pretreatments, structured data can be mapped to the event arguments within the announcements. Therefore, we can automatically identify the event mention and label the event trigger and the event arguments contained in it to generate the sentence-level data, as shown at the bottom of Figure 3. Then, the event mention is automatically marked as a positive example and the rest of the sentences in the announcement are marked as negative examples to constitute the document-level data, as shown on the right of Figure 3. The document-level data and the sentence-level data together form the training data required for the EE system.\nTips: in reality, there are some challenges in data labeling: the correspondence of financial announcements and event knowledge base; the ambiguity and abbreviation of event arguments. There are some tips we used to solve these problems, examples are shown in Figure 3. (i) Decrease the search space: the search space of candidate announcements can be reduced through retrieving key event arguments such as the publish date and the stock code of the announcements. (ii) Regular expression: more event arguments can be matched to improve the recall of the labeled data through regular expression. for example, LONCIN CO LTD (Role=Shareholder Name) in the financial event database, but LONCIN in the announcement. We can solve this problem by regular expression and label the LONCIN as an event argument (iii) Rules: some task-driven rules can be used to automatically annotate data. for example, we can mark 12 months (Role=Pledging End Date) by calculating the date difference between 2017-02-23 (Role=Pledging Start Date) and 2018-02-23 (Role=Pledging End Date). Figure 4 depicts the overall architecture of the EE system proposed in this paper which primarily involves the following two components: The sentence-level Event Extraction (SEE) purposes to extract event arguments and event triggers from one sentence; The document-level Event Extraction (DEE) aims to extract event arguments from the whole document based on a key event detection model and an arguments-completion strategy.",
+      "title": "Data Generation"
+    },
+    {
+      "content": "",
+      "title": "Event Extraction (EE)"
+    },
+    {
+      "content": "We formulate SEE as a sequence tagging task and the training data supported by sentence-level labeled data. Sentences are represented in the BIO format where each character (event triggers, event arguments and others) is labeled as B-label if the token is the beginning of an event argument, I-label if it is inside an event argument or Olabel if it is otherwise. In recent years, neural networks have been used in most NLP tasks because it can automatically learn features from the text representation. And the Bi-LSTM-CRF model can produce state of the art (or close to) accuracy on classic NLP tasks such as part of speech (POS), chunking and NER (Huang et al., 2015). It can effectively use both past and future input features thanks to a Bidirectional Long Short-Term Memory (BiLSTM) component and can also use sentence-level tag information thanks to a Conditional Random Field (CRF) layer.\nThe specific model implementation of the SEE, as shown on the left of Figure 4, is made up of a Bi-LSTM neural network and a CRF layer. Each Chinese character in a sentence is represented by a vector as the input of the Bi-LSTM layer 11 (Mikolov et al., 2013). The output of the Bi-LSTM layer is projected to score for each character. And a CRF layer is used to overcome the label-bias problem. The SEE eventually returns the result of the sentence-level EE for each sentence in the document.",
+      "title": "Sentence-level Event Extraction (SEE)"
+    },
+    {
+      "content": "The DEE is composed of two parts: a key event detection model which aims to discover the event mention in the document and an argumentscompletion strategy which aims to pad the missing event arguments.\nKey event detection: as shown on the right of figure 4, the input of the event detection is made up of two parts: one is the representation of the event arguments and event trigger come from the output of SEE (blue), and the other is the vector representation of the current sentence(red). The two parts are concatenated as the input feature of the Convolutional Neural Networks(CNN) layer. And then the current sentence is classified into two categories: a key event or not.\nArguments-completion strategy: We have obtained the key event which contains most of the event arguments by the DEE, and the event extraction results for each sentence in a document by the SEE. For obtaining complete event information, we use arguments-completion strategy which can automatically pad the missing event arguments from the surrounding sentences. As shown in figure 4, an integrated Pledge event contains event arguments in event mention S n and filled event argument 12 months obtained from the sentence S n+1 .",
+      "title": "Document-level Event Extraction(DEE)"
+    },
+    {
+      "content": "",
+      "title": "Evaluation"
+    },
+    {
+      "content": "We carry out experiments on four types of financial events: Equity Freeze (EF) event, Equity Pledge (EP) event, Equity Repurchase (ER) event and Equity Overweight (EO) event. A total of 2976 announcements have been labeled by automatically generating data. We divided the labeled data into three subsets: the training set (80% of the total number of announcements), development set (10%) and test set (10%). Table 1 shows the statistics of the dataset. NO.ANN represents the number of announcements can be labeled automatically for each event type. NO.POS represents the total number of positive case sentences (event mentions). On the contrary, NO.NEG represents the number of negative case sentences. The positive and negative case sentences constitute the document-level data as the training data for the DEE. The positive sentences which contain event trigger and a series of event arguments, are labeled as sentence-level training data for the SEE. We randomly select 200 samples (contain 862 event arguments) to manually evaluate the precision of the automatically labeled data. The average precision is shown in Table 2 which demonstrates that our automatically labeled data is of high quality.",
+      "title": "Dataset"
+    },
+    {
+      "content": "We use the precision(P ), recall(R) and (F 1 ) to evaluate the DCFEE system. Table 3 shows the performance of the pattern-based method 12 and the DCFEE in the extraction of the Equity Freeze event. The experimental results show that the performance of the DCFEE is better than that of the pattern-based method in most event arguments extraction.    Table 4: P , R, F 1 of SEE, DEE on the different event types.\nIn conclusion, the experiments show that the method based on DS can automatically generate high-quality labeled data to avoid manually labeling. It also validates the DCFEE proposed in this paper, which can effectively extract events from the document-level view.",
+      "title": "Performance of the System"
+    },
+    {
+      "content": "The application of the DCFEE system: an online EE service for Chinese financial texts. It can help financial professionals quickly get the event information from the financial announcements. Figure 5 shows a screenshot of the online DCFEE system. Different color words represent different event arguments' types, underlined sentences represent the event mention in the document. As shown in figure 5, we can obtain a complete Equity Freeze event from unstructured text (an announcement about Equity Freeze).",
+      "title": "Application of the DCFEE"
+    },
+    {
+      "content": "The current EE approaches can be mainly classified into statistical methods, pattern-based method and hybrid method (Hogenboom et al., 2016).\nStatistical method can be divided into two categories: traditional machine learning algorithm based on feature extraction engineering (Ahn, 2006), (Ji and Grishman, 2008), (Liao and Grishman, 2010), (Reichart and Barzilay, 2012) and neural network algorithm based on automatic feature extraction , (Nguyen et al., 2016), . The pattern method is usually used in industry because it can achieve higher accuracy, but meanwhile a lower recall. In order to improve recall, there are two main research directions: build relatively complete pattern library and use a semi-automatic method to build trigger dictionary , (Gu et al., 2016). Hybrid event-extraction methods combine statistical methods and pattern-based methods together (Jungermann and Morik, 2008), (Bjorne et al., 2010). To our best knowledge, there is no system that automatically generates labeled data, and extracts document-level events automatically from announcements in Chinese financial field.",
+      "title": "Related Work"
+    },
+    {
+      "content": "We present DCFEE, a framework which is able to extract document-level events from Chinese financial announcements based on automatically labeled data. The experimental results show the effectiveness of the system. We successfully put the system online and users can quickly get event information from the financial announcements through it9.",
+      "title": "Conclusion"
+    },
+    {
+      "content": "",
+      "title": "Figure 2 :"
+    },
+    {
+      "content": "",
+      "title": "Figure 3 :"
+    },
+    {
+      "content": "",
+      "title": "Figure 4 :"
+    },
+    {
+      "content": "",
+      "title": "Figure 5 :"
+    },
+    {
+      "content": "",
+      "title": "Table 2 :"
+    },
+    {
+      "content": "",
+      "title": "Table 3 :"
+    },
+    {
+      "content": "",
+      "title": "Table 4"
+    }
+  ],
+  "figures": [
+    {
+      "caption": "Overview of the DCFEE framework.",
+      "content": "Figure 2 :\n2Overview of the DCFEE framework.",
+      "id": ""
+    },
+    {
+      "caption": "The process of labeled data generation.",
+      "content": "Figure 3 :\n3The process of labeled data generation.",
+      "id": ""
+    },
+    {
+      "caption": "11 Word vectors are trained with a version of word2vec on Chinese WiKi corpus The architecture of event extraction.",
+      "content": "Figure 4 :\n411 Word vectors are trained with a version of word2vec on Chinese WiKi corpus The architecture of event extraction.",
+      "id": ""
+    },
+    {
+      "caption": "A screen shot of the online DCFEE system 9 .",
+      "content": "Figure 5 :\n5A screen shot of the online DCFEE system 9 .",
+      "id": ""
+    },
+    {
+      "caption": "E1:The 520,000 shares held by Nagafu Ruihua were frozen by the people's Court of Dalian city in May 5, 2017. E2:The period of freezing is 3 years.",
+      "content": "E1:The 520,000 shares held by Nagafu Ruihua were frozen by the people's Court of Dalian city in May 5, 2017. E2:The period of freezing is 3 years.C1: \n520,000 \n2017 5 5 \nC2: \n3 \n\nTrigger \n\nShareholder Name \n\nNumber of Frozen Stock \n\nFrozen Institution \n\nFreezing Start Date \n\nFreezing End Date \nTrigger",
+      "id": ""
+    },
+    {
+      "caption": "Dataset NO.ANN NO.POS NO.NEG",
+      "content": "Dataset NO.ANN NO.POS NO.NEGEF \n526 \n544 \n2960 \nEP \n752 \n775 \n6392 \nEB \n1178 \n1192 \n11590 \nEI \n520 \n533 \n11994 \nTotal \n2976 \n3044 \n32936 \n\nTable 1: Statistics of automatically labeled data.",
+      "id": ""
+    },
+    {
+      "caption": "Manual Evaluation Results.",
+      "content": "Table 2 :\n2Manual Evaluation Results.",
+      "id": ""
+    },
+    {
+      "caption": "P , R, F 1 of pattern-based and DCFEE on the Equity Freeze event.",
+      "content": "Table 3 :\n3P , R, F 1 of pattern-based and DCFEE on the Equity Freeze event.",
+      "id": ""
+    },
+    {
+      "caption": "shows the P , R, F 1 of SEE and DEE on the different event types. It is noteworthy that the golden data used in SEE stage is the automatically generated data and the golden data used in DEE stage comes from the financial event knowledge base. The experimental results show that the effectiveness of SEE and DEE, the acceptable precision 12 Example of a pattern for a freeze event: (Frozen institution(ORG)+, Trigger word(TRI)+, Shareholder names(NAME)+,time)    and expansibility of the DCFEE system presented in this paper.EO 88.76 91.88 90.25 80.77 45.93 58.56",
+      "content": "Table 4\n4shows the P , R, F 1 of SEE and DEE on the different event types. It is noteworthy that the golden data used in SEE stage is the automatically generated data and the golden data used in DEE stage comes from the financial event knowledge base. The experimental results show that the effectiveness of SEE and DEE, the acceptable precision 12 Example of a pattern for a freeze event: (Frozen institution(ORG)+, Trigger word(TRI)+, Shareholder names(NAME)+,time)    and expansibility of the DCFEE system presented in this paper.EO 88.76 91.88 90.25 80.77 45.93 58.56    Stage \nSEE \nDEE \nType P (%) R(%) F1(%) P (%) R(%) F1(%) \nEF \n90.00 90.41 90.21 80.70 63.40 71.01 \nEP \n93.31 94.36 93.84 80.36 65.91 72.30 \nER \n92.79 93.80 93.29 88.79 82.02 85.26",
+      "id": ""
+    },
+    {
+      "caption": "Event Mention : Intermediate people's courthas of the Changchun city held a judicial freeze on the 43,070 million shares held by long group. …From August 12, 2016 to August 11, 2018.",
+      "content": "Event Mention : Intermediate people's courthas of the Changchun city held a judicial freeze on the 43,070 million shares held by long group. …From August 12, 2016 to August 11, 2018.(Shareholder Name) \n\n(Frozen Institution) \n\n(Number of Frozen Stock) \n\n(Freezing Start Date) \n\n(Freezing End Date) \n\n(Trigger) \n\n(Equity Freeze) \n\nOverview \nResult \nText \nReturn",
+      "id": ""
+    }
+  ],
+  "references": [
+    {
+      "doi": "",
+      "text": "The stages of event extraction. David Ahn, The Workshop on Annotating and Reasoning about Time and Events. David Ahn. 2006. The stages of event extraction. In The Workshop on Annotating and Reasoning about Time and Events, pages 1-8."
+    },
+    {
+      "doi": "",
+      "text": "Complex event extraction at pubmed scale. Jari Bjorne, Filip Ginter, Sampo Pyysalo, Jun&apos;ichi Tsujii, Tapio Salakoski, Bioinformatics. 2612Jari Bjorne, Filip Ginter, Sampo Pyysalo, Jun'Ichi T- sujii, and Tapio Salakoski. 2010. Complex even- t extraction at pubmed scale. Bioinformatics, 26(12):i382-i390."
+    },
+    {
+      "doi": "",
+      "text": "Automatically labeled data generation for large scale event extraction. Yubo Chen, Shulin Liu, Xiang Zhang, Kang Liu, Proceedings of the ACL. the ACLYubo Chen, Shulin Liu, Xiang Zhang, Kang Liu, and Jun Zhao. 2017. Automatically labeled data genera- tion for large scale event extraction. In Proceedings of the ACL, pages 409-419."
+    },
+    {
+      "doi": "",
+      "text": "Event extraction via dynamic multi-pooling convolutional neural networks. Yubo Chen, Liheng Xu, Kang Liu, Daojian Zeng, Jun Zhao, Proceedings of the ACL. the ACLYubo Chen, Liheng Xu, Kang Liu, Daojian Zeng, and Jun Zhao. 2015. Event extraction via dynam- ic multi-pooling convolutional neural networks. In Proceedings of the ACL."
+    },
+    {
+      "doi": "",
+      "text": "Incorporating copying mechanism in sequence-to-sequence learning. Jiatao Gu, Zhengdong Lu, Hang Li, O K Victor, Li, Proceedings of the ACL. the ACLJiatao Gu, Zhengdong Lu, Hang Li, and O.K. Vic- tor Li. 2016. Incorporating copying mechanism in sequence-to-sequence learning. In Proceedings of the ACL, pages 1631-1640."
+    },
+    {
+      "doi": "",
+      "text": "A survey of event extraction methods from text for decision support systems. Frederik Hogenboom, Flavius Frasincar, Uzay Kaymak, Franciska De Jong, Emiel Caron, Decision Support Systems. 85Frederik Hogenboom, Flavius Frasincar, Uzay Kay- mak, Franciska De Jong, and Emiel Caron. 2016. A survey of event extraction methods from text for de- cision support systems. Decision Support Systems, 85(C):12-22."
+    },
+    {
+      "doi": "",
+      "text": "Bidirectional lstm-crf models for sequence tagging. Zhiheng Huang, Wei Xu, Kai Yu, Computer ScienceZhiheng Huang, Wei Xu, and Kai Yu. 2015. Bidirec- tional lstm-crf models for sequence tagging. Com- puter Science."
+    },
+    {
+      "doi": "",
+      "text": "Refining event extraction through cross-document inference. Heng Ji, Ralph Grishman, Proceedings of the ACL. the ACLHeng Ji and Ralph Grishman. 2008. Refining even- t extraction through cross-document inference. In Proceedings of the ACL, pages 254-262."
+    },
+    {
+      "doi": "",
+      "text": "Enhanced Services for Targeted Information Retrieval by Event Extraction and Data Mining. Felix Jungermann, Katharina Morik, SpringerBerlin HeidelbergFelix Jungermann and Katharina Morik. 2008. En- hanced Services for Targeted Information Retrieval by Event Extraction and Data Mining. Springer Berlin Heidelberg."
+    },
+    {
+      "doi": "",
+      "text": "Using document level cross-event inference to improve event extraction. Shasha Liao, Ralph Grishman, Proceedings of the ACL. the ACLShasha Liao and Ralph Grishman. 2010. Using doc- ument level cross-event inference to improve event extraction. In Proceedings of the ACL, pages 789- 797."
+    },
+    {
+      "doi": "",
+      "text": "Exploiting argument information to improve event detection via supervised attention mechanisms. Shulin Liu, Yubo Chen, Kang Liu, Proceedings of the ACL. the ACLShulin Liu, Yubo Chen, Kang Liu, and Jun Zhao. 2017. Exploiting argument information to improve event detection via supervised attention mechanisms. In Proceedings of the ACL, pages 1789-1798."
+    },
+    {
+      "doi": "",
+      "text": "Efficient estimation of word representations in vector space. Tomas Mikolov, Kai Chen, Greg Corrado, Jeffrey Dean, Computer Science. Tomas Mikolov, Kai Chen, Greg Corrado, and Jeffrey Dean. 2013. Efficient estimation of word represen- tations in vector space. Computer Science."
+    },
+    {
+      "doi": "",
+      "text": "Joint event extraction via recurrent neural networks. Kyunghyun Thien Huu Nguyen, Ralph Cho, Grishman, Proceedings of the ACL. the ACLThien Huu Nguyen, Kyunghyun Cho, and Ralph Gr- ishman. 2016. Joint event extraction via recurrent neural networks. In Proceedings of the ACL, pages 300-309."
+    },
+    {
+      "doi": "",
+      "text": "Multi event extraction guided by global constraints. Roi Reichart, Regina Barzilay, Proceedings of the NAACL. the NAACLRoi Reichart and Regina Barzilay. 2012. Multi event extraction guided by global constraints. In Proceed- ings of the NAACL, pages 70-79."
+    },
+    {
+      "doi": "",
+      "text": "Distant supervision for relation extraction via piecewise convolutional neural networks. Daojian Zeng, Kang Liu, Yubo Chen, Jun Zhao, Proceedings of the EMNLP. the EMNLPDaojian Zeng, Kang Liu, Yubo Chen, and Jun Zhao. 2015. Distant supervision for relation extraction via piecewise convolutional neural networks. In Pro- ceedings of the EMNLP, pages 1753-1762."
+    }
+  ],
+  "parsed_external_ids": {
+    "acl": "P18-4009",
+    "arxiv": null,
+    "dblp": "conf/acl/YangCLXZ18",
+    "doi": "10.18653/v1/p18-4009",
+    "mag": 2803884531.0,
+    "pubmed": null,
+    "pubmedcentral": null
+  },
+  "source": {
+    "open_access": {
+      "license": null,
+      "status": "CLOSED",
+      "url": null
+    },
+    "pdf_sha": "3f8d2ac8e4ed14524bffe4adafe3ee22233ef605",
+    "pdf_urls": [
+      "https://www.aclweb.org/anthology/P18-4009.pdf"
+    ]
+  },
+  "pdf_urls": [
+    "https://www.aclweb.org/anthology/P18-4009.pdf"
+  ],
+  "pdf_sha": "3f8d2ac8e4ed14524bffe4adafe3ee22233ef605",
+  "open_access": {
+    "license": null,
+    "status": "CLOSED",
+    "url": null
+  },
+  "license": null,
+  "open_access_url": null,
+  "open_access_status": "CLOSED",
+  "metadata_title": "DCFEE: A Document-level Chinese Financial Event Extraction System based on Automatically Labeled Training Data",
+  "metadata_authors": [
+    {
+      "authorId": 144955350.0,
+      "name": "Hang Yang"
+    },
+    {
+      "authorId": 1763402.0,
+      "name": "Yubo Chen"
+    },
+    {
+      "authorId": 2200096.0,
+      "name": "Kang Liu"
+    },
+    {
+      "authorId": 2116643823.0,
+      "name": "Yang Xiao"
+    },
+    {
+      "authorId": 1390572170.0,
+      "name": "Jun Zhao"
+    }
+  ],
+  "publicationdate": "2018-07-01",
+  "influentialcitationcount": 31,
+  "citationcount": 160,
+  "year": 2018,
+  "publicationvenueid": "1e33b3be-b2ab-46e9-96e8-d4eb4bad6e44",
+  "publicationtypes": [
+    "JournalArticle",
+    "Conference"
+  ],
+  "metadata_externalids": {
+    "ACL": "P18-4009",
+    "ArXiv": null,
+    "CorpusId": 51871198,
+    "DBLP": "conf/acl/YangCLXZ18",
+    "DOI": "10.18653/v1/P18-4009",
+    "MAG": 2803884531.0,
+    "PubMed": null,
+    "PubMedCentral": null
+  },
+  "PubMedCentral": null,
+  "PubMed": null,
+  "MAG": 2803884531.0,
+  "DOI": "10.18653/v1/P18-4009",
+  "CorpusId": 51871198,
+  "ArxIv": null,
+  "DBLP": "conf/acl/YangCLXZ18",
+  "ACL": "P18-4009",
+  "referencecount": 15,
+  "venue": "Annual Meeting of the Association for Computational Linguistics",
+  "journal": {
+    "name": null,
+    "pages": "50-55",
+    "volume": null
+  },
+  "volume": null,
+  "pages": "50-55",
+  "name": null,
+  "isopenaccess": true,
+  "url": "https://www.semanticscholar.org/paper/83b4ce13ee9f7138ffb0bce56db7e20b27bd8e48",
+  "fieldofstudy_source": "external",
+  "fieldofstudy_category": "Computer Science",
+  "rn": 1,
+  "explicit_gpu_hours": "None specified",
+  "estimated_gpu_hours": "None specified",
+  "number_gpu": "None specified",
+  "gpu_type": "None specified",
+  "training_details": "None specified",
+  "reasoning": "None specified",
+  "summary": "The DCFEE framework is introduced for document-level Chinese financial event extraction based on automatically labeled training data. The paper addresses the challenges in extracting financial events, such as the lack of labeled data and the necessity of document-level extraction. By utilizing Distance Supervision (DS) for data generation, the authors develop a method to automatically label data and extract sentence-level and document-level events through a sequence tagging model and a key-event detection model. The framework was tested on a dataset of 2976 financial announcements, successfully demonstrating its effectiveness in extracting information and generating high-quality labeled data. The DCFEE framework has been implemented as an online application to help financial professionals quickly retrieve event information from financial announcements.",
+  "classification": "Application Paper",
+  "methods": "[\"Distance Supervision\", \"Bi-LSTM-CRF\", \"Convolutional Neural Networks (CNN)\"]",
+  "results": "[\"The DCFEE framework can effectively extract events from document-level view.\", \"Achieved high quality in automatically labeled data for training.\"]",
+  "models": "[\"Bi-LSTM-CRF\"]",
+  "datasets": "[\"None specified\"]",
+  "metrics": "[\"Precision\", \"Recall\", \"F1\"]",
+  "limitations": null,
+  "train_row_index": 928461,
+  "stratum": "high_gt100"
+}

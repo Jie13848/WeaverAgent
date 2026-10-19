@@ -1,0 +1,384 @@
+{
+  "corpus_id": 213253488,
+  "parsed_title": "Learning Signed Network Embedding via Graph Attention",
+  "parsed_authors": [
+    "Yu Li \nCollege of Computer Science and Technology\nJilin University\nChina\n\nKey Laboratory of Symbolic Computation and Knowledge Engineering of Ministry of Education\nChina",
+    "Yuan Tian yuantian@jlu.edu.cn \nSchool of Artificial Intelligence\nJilin University\nChina\n\nMinistry of Education\nKey Laboratory of Bionic Engineering\nChina",
+    "Jiawei Zhang jiawei@ifmlab.org \nDepartment of Computer Science\nIFM Lab\nFlorida State University\nUSA",
+    "Yi Chang yichang@jlu.edu.cn \nSchool of Artificial Intelligence\nJilin University\nChina\n\nKey Laboratory of Symbolic Computation and Knowledge Engineering of Ministry of Education\nChina"
+  ],
+  "abstract": "Learning the low-dimensional representations of graphs (i.e., network embedding) plays a critical role in network analysis and facilitates many downstream tasks. Recently graph convolutional networks (GCNs) have revolutionized the field of network embedding, and led to state-of-the-art performance in network analysis tasks such as link prediction and node classification. Nevertheless, most of the existing GCN-based network embedding methods are proposed for unsigned networks. However, in the real world, some of the networks are signed, where the links are annotated with different polarities, e.g., positive vs. negative. Since negative links may have different properties from the positive ones and can also significantly affect the quality of network embedding. Thus in this paper, we propose a novel network embedding framework SNEA to learn Signed Network Embedding via graph Attention. In particular, we propose a masked self-attentional layer, which leverages self-attention mechanism to estimate the importance coefficient for pair of nodes connected by different type of links during the embedding aggregation process. Then SNEA utilizes the masked self-attentional layers to aggregate more important information from neighboring nodes to generate the node embeddings based on balance theory. Experimental results demonstrate the effectiveness of the proposed framework through signed link prediction task on several real-world signed network datasets.",
+  "sections": [
+    {
+      "content": "Network embedding, aiming to learn low-dimensional embedding of nodes in networks, plays a critical role in network analysis and has received much attention from data mining and machine learning communities. Since graphs have been a popular way to model structured data, network embedding enables many downstream network analysis tasks such as link prediction, node classification and community detection (Tian et al. 2014;Zhang and Chen 2018;Shao et al. 2019) (Please note that the terms graph and network are used interchangeably in this paper). Traditional network embedding methods predominantly focus on the high-order proximity approximation and network properties preservation, and employ linear modeling approaches to obtain the node embeddings (Yang et al. 2017;Lian et al. 2018;Qiu et al. 2018). Recent research, however, has pivoted to learn the node embeddings using graph convolution networks (GCNs) (Kipf and Welling 2017;Chen, Ma, and Xiao 2018;Abu-El-Haija et al. 2018;Derr, Ma, and Tang 2018;Abu-El-Haija et al. 2019), which aim to aggregate information from the neighbors for node embeddings. These GCNbased network embedding methods have revolutionized the field of network embedding and achieved the state-of-the-art performance in network analysis tasks. Nevertheless, most of the GCN-based network embedding methods are only proposed for unsigned networks (consisting of only positive links). However, in the real word, some networks are signed with the links are annotated with different polarities, i.e., positive vs. negative. Such different link polarities can convey very different physical meanings and information (Kunegis, Preusse, and Schwagereit 2013), which should be effectively incorporated in network representation learning. Since the methods proposed for unsigned networks can not distinguish the different properties of positive and negative links, and fail to exploit additional information from negative links, therefore they cannot be directly applied on signed networks. Some signed network embedding methods have been proposed in recent years (Kunegis et al. 2010;Hsieh, Chiang, and Dhillon 2012;Chiang, Whang, and Dhillon 2012;Zheng and Skillicorn 2015;Yuan, Wu, and Xiang 2017;Wang et al. 2017;Kim et al. 2018;Derr, Ma, and Tang 2018). Some of these methods employ linear modeling approaches to learn the node embedding by spectral analysis or matrix factorization, while the other methods treat neighboring nodes equally without considering the different contributions of different nodes when aggregating and propagating information in networks. Recently, for the target nodes, many works have demonstrated that impacts of different neighbors can be different, and quantifying such different impacts can significantly improve the performance of unsigned network analysis tasks with deep learning models (Zhao et al. 2017;Vaswani et al. 2017;Veličković et al. 2018). However, in signed networks, negative links have different properties from positive links, therefore signed net-works will generate more complex relationships than unsigned networks.\nBased on the above analysis, when designing a neural network architecture with attention mechanism for signed network, we need to address the following issues. In a signed network, nodes can be connected by different types of links (i.e., positive links and negative links). In other words, nodes can have different sets of neighbors connected by links with different polarities. Therefore, how to distinguish the difference of neighbors and efficiently aggregate more important information from the neighboring nodes is required in signed networks.\nIn this paper, we propose a novel network embedding framework SNEA to learn Signed Network Embeddings via graph Attention. Instead of directly applying meanpooling strategy when aggregating information from neighboring nodes, SNEA proposes a graph attentional layer, which utilizes a masked self-attention mechanism to compute the importance coefficients for the neighbors. The importance coefficients effectively quantify the impacts among the neighbors in node representation learning. Afterwards, based on the balance theory, SNEA stacks multiple graph attentional layers to aggregate node information from neighboring nodes with different importance coefficients. Therefore, the node embeddings learned by SNEA can extract not only the local structural information, but also the global embedding in the signed networks, whose effectiveness will be evaluated with experiments on real-world signed network datasets. Our main contributions are listed as follows:\n• we propose a graph attentional layer, which utilizes a masked self-attention mechanism to estimate the importance coefficient for pair of nodes connected by different type of links for embedding aggregation process.\n• we propose a novel signed network embedding framework, namely SNEA, which leverages the graph attentional layers to aggregate more important information from neighboring nodes based on balance theory;\n• we design an objective function for both framework optimization and node representation learning;\n• we evaluate the effectiveness of the proposed framework SNEA on several real-world signed network datasets through the signed link prediction task.",
+      "title": "Introduction"
+    },
+    {
+      "content": "In recent years, signed network analysis has attracted more and more attention from data mining and machine learning communities, as many systems can be expressed as signed graphs or signed networks. Since the network analysis methods proposed for unsigned networks (Wang, Cui, and Zhu 2016;Zhang and Chen 2018;Lian et al. 2018) can not distinguish the different properties of positive and negative links, many kinds of signed network analysis methods have been developed for tasks such as node clustering, node classification, signed link prediction and so on.\nIn (Kunegis et al. 2010;Chiang, Whang, and Dhillon 2012;Zheng and Skillicorn 2015), signed Laplacian em-bedding methods adopt signed variants of the graph Laplacian to cluster nodes in signed networks. In (Hsieh, Chiang, and Dhillon 2012;Tang, Aggarwal, and Liu 2016), matrix factorization based signed network embedding methods are proposed for node classification and signed link prediction tasks. The probabilistic methods are also used for node representation learning. For example, SNE (Yuan, Wu, and Xiang 2017) adopts a log-bilinear model and optimizes a Skip-Gram-like (Mikolov et al. 2013) objective function by the maximum likelihood estimation during node embedding learning. SIDE (Kim et al. 2018) utilizes truncated random walks and optimizes likelihood over different type of network links to derive the node embeddings.\nNot only these linear modeling methods, but the deep learning based signed network embedding methods are also proposed for signed networks. SiNE (Wang et al. 2017) optimizes an objective function guided by social theory in signed networks to generate the node embeddings using a deep learning framework. SGCN (Derr, Ma, and Tang 2018) generalizes the GCNs to signed networks and applies a mean-pooling strategy to aggregate information from neighboring nodes according to social theory.\nWith the increasing investigation of the attention mechanism on unsigned networks (Zhao et al. 2017;Abu-El-Haija et al. 2018;Veličković et al. 2018;Wang et al. 2019;Yang et al. 2019), it has been demonstrated that impacts of different neighboring nodes can be different, and quantifying such different impacts can significantly improve the performance of network analysis tasks. Thus researchers have begun to turn their attention to signed networks (Huang et al. 2019). SiGAT (Huang et al. 2019) first introduces the GAT (Veličković et al. 2018) to signed networks and designs a motif-based graph neural network model based on balance theory and status theory. Different from SiGAT, our method SNEA proposes a graph attentional layer, which provides a more universal way to aggregate and propagate more important information through both positive and negative links based on balance theory.",
+      "title": "Related Work"
+    },
+    {
+      "content": "For the convenience of presentation, we first introduce the main notations used in this paper. Boldface uppercase letters (e.g., A) denote matrices, boldface lowercase letters (e.g., w) denote vectors. Calligraphic math font (e.g., V) denotes set, and |V| is the cardinality of V. In this way, a signed network can be expressed as\nwhere E + and E − denote the sets of positive and negative links, respectively. Positive and negative neighbors of v i are denoted as N + i and N − i respectively, in addition,\nAs the balance theory (Heider 1946;Cartwright and Harary 1956) implies that \"the friend of my friend is my friend\" and \"the foe of my friend is my foe\", for the target node, there exists a set of \"friend\" nodes and a set of \"foe\" nodes, which are called balanced node set and unbalanced node set.\nDefinition 1 Balanced/Unbalanced node set (Derr, Ma, and Tang 2018). For the target node v i in signed network, the balanced (unbalanced) node set is defined as a set of nodes (e.g., v j ) that have even (odd) negative links along a path connecting v i and v j .\nMore specifically, the balanced node set B i and unbalanced node set U i with respect to v i can be defined as: However, for each node, the balanced node set and the unbalanced node set maybe overlap. As shown in Figure 1, the two triangles on the left are balanced triangles according to balance theory, while the two triangles on the right are unbalanced triangles. The pairs of nodes in the unbalanced triangles are both \"friend\" and \"foe\". As known, the information from the balanced node set (\"friends\") and the unbalanced node set (\"foes\") may convey different characteristics. There exists problems if we represent each node as only one representation. To tackle this issue, in this paper, we represent each node as two embeddings, i.e., balanced embedding and unbalanced embedding, respectively.",
+      "title": "Preliminary"
+    },
+    {
+      "content": "In this section, we propose a novel network embedding framework -SNEA for signed network. The remaining part of this section will be organized as follows. At the beginning, a graph attentional layer, which utilizes a masked selfattention mechanism to handle the problem of relevance of node embeddings in signed network will be introduced. After that, we will learn the node embeddings by aggregating information from balanced and unbalanced node sets by stacking the graph attentional layers. Finally, we will introduce how to train this model and handle practical tasks in signed networks.",
+      "title": "The Proposed Framework"
+    },
+    {
+      "content": "Before aggregating information from neighbors for each node, we should notice that negative links have different properties from positive links and the impacts from different type of neighbors are different. Here we introduce a masked self-attention mechanism, which is used to learn the importance of neighbors for each node in signed network when aggregating and propagating information through positive and negative links.\nAs we mentioned above, each node can be represented as balanced embedding h B and unbalanced embedding h U , and these two types of embeddings have different characteristics. Therefore, for each embedding type of nodes (e.g., node with embedding type R, R ∈ {B, U}), we leverage the self-attention mechanism to learn the importance of neighbors for each node during the information aggregation process.\nGiven nodes v i ∈ V and v j ∈ N i , let h i and h j denote the input embeddings of node v i and v j . The importance of v j to v i during the information aggregation process for embedding type R can be formulated as follows:\nwhere the attention mechanism a denotes a single-layer feedforward neural network, parameterized by a shared attentional parameter vector b R ∈ R 1×2dout , and applying a tanh function to make the attention model nonlinearity. W R ∈ R din×dout denotes a weight matrix for the linear transformation of node embeddings, and d in and d out denote the input and output embedding dimensions, respectively. In addition, · T represents transposition and denotes the concatenation operator. After obtaining the importance between pair of nodes, we can normalize them to make the attention score α R ij comparable across different nodes, as shown in Figure 2(a). However, since there are two type of links and two type of embeddings for each node in signed network, the normalization process is more complex than unsigned networks. Therefore, we will introduce the normalization process detailedly in the following embedding aggregation process.\nSince there is only one type of initial embedding for each node in signed network, we first generate the balanced embedding h B(1) and unbalanced embedding h U (1) , we treat it as the first aggregation process. If we denote the initial embedding of v i as h (0) i ∈ R 1×din , the first aggregation layer can be defined as:\nwhere α\nare the attention scores of nodes from balanced node set and unbalanced node set with respect to v i . Please note that, we add the self-loop in the aggregation to make sure the embedding will not be lost in the aggregation process. In addition,\n(1) out denote the linear transformation matrices responsible for the information aggregated fromN + i andN − i respectively, and d\nBy normalizing the importance between pair of nodes, we can get the normalized attention scores α\nFor the deeper aggregation layers (l > 1), the attentionguided aggregation layers can be recursively defined as:\nout denote the shared linear transformation matrices. Taking Figure 2 Calculating the importance between pair of nodes for deeper layers are more complex than the first aggregation layer. Therefore, we propose to use the following formulas to calculate the importance for different pair of nodes for deeper layers:\nThe normalized attention scores can be calculated by the following formulas:\nIt's worth noting that when we calculate the attention scores, we use the same type of embedding as the input of the attention mechanism to calculate the importance coefficients, and use the shared weight matrices to build the connections between balanced and unbalanced embeddings. This is because the balanced embedding and unbalanced embedding represent different physical meanings from each other, as nodes from balanced node set and unbalanced node set mean \"friends\" and \"foes\" respectively according to balance theory. Therefore, using the same type of embeddings to calculate the importance coefficients can estimate the correlation between pair of nodes more accuracy.\nThe logic behind the aggregation processes for h for v i , we aggregate the balanced embeddings from its balanced node set and the unbalanced embeddings from its unbalanced node set. For the unbalanced embedding h U (l) i , we aggregate the balanced embeddings from its unbalanced node set and the unbalanced embeddings from its balanced node set. Furthermore, the sum of the attention scores in each graph attentional layer equals to 1, in other words, j∈N +\n= 1, which means that attention scores are comparable across nodes from both the balanced and unbalanced node sets.\nAfter the initial embedding propagates through several aggregation layers mentioned above, we can obtain the balanced and unbalanced embedding h\nwhere W M is the linear transformation matrix responsible for the concatenation of h\n. With the aggregation layers defined above, the embedding generation process of SNEA can be summarized in Algorithm 1.",
+      "title": "Signed Graph Attentional Layers"
+    },
+    {
+      "content": "With the structure of our framework as mentioned above, the embedding of each node in signed networks can be generated by incorporating the balanced and unbalanced embeddings as introduced in last subsection. In this subsection, we will introduce the objective function of the proposed framework and the concrete training details. Labels are extremely lacking in the real-world signed networks, however at the same time link type, as an important property, reveals the relationships between nodes. Recall that there are three type of links in signed networks: positive link, negative link and no link, denoted as S = {+, −, ?} -of which \"no link\" means there exists no link between the pair of nodes. Therefore, to model the framework easier, we transform the optimization problem as a classification problem. To be specific, we construct a mini-batch of nodes V t , and a set of link triplets T . T consists of triplets of the form (v i , v j , s ij ), where v i ∈ V t or v j ∈ V t , and s ij ∈ S denotes which type of link exists between v i and v j . We can denote the one-hot coding vector of s ij as s ij ∈ {0, 1} |S| , and evaluate the cross-entropy error over T as:\nwhere\nθ src denotes the parameters of softmax regression classifier. w sij denotes the weight associated with link type s ij subject to sij ∈S w sij = 1. Due to the sparsity of signed networks and the imbalance of positive and negative links, we define different weight w sij for each link type s ij ∈ S according to the number of positive and negative links, and generate \"no links\" as described in (Derr, Ma, and Tang 2018). The extended structural balance theory (Qian and Adali 2013; suggests that nodes are more likely to be more similar to the node with a positive link than a node with a negative link. In addition to this, nodes are more likely to be more similar to the node with a positive link than a node with no link, while nodes are more likely to be more dissimilar to the node with a negative link than a node with no link. More specifically,\nshould be satisfied. To achieve this goal, for each v i ∈ V, we consider the following four cases: (1) if v i is more similar to v j than v t in the embedding space, i.e., h i − h j 2 2 − h i − h t 2 2 < 0, we should not penalize this case; while (2) if v i is more similar to v t than v j in the embedding space, i.e.,\n2 > 0, we should add a penalty to pull the embedding of v i be more closer to v j than v t ; in the similar way,\nwe should add a penalty to pull the embedding of v i be more closer to v t than v k . Based on the aforementioned analysis, we propose the following minimization terms to force v i closer to v j than v k and force v i closer to v t than v k in the embedding space:\nTherefore, for all the links in the triplet set T , the objective of extended structural balance theory can be mathematically defined as: (vi,vt,?)∈T (+,?) L pos no (vi,vt,?)∈T (−,?) L neg no (23) where T (+,?) (T (−,?) ) is the set of triplets with s ij ∈ {+, ?} (s ij ∈ {−, ?}) from T .\nTo incorporate the extended structural balance theory into signed network embedding, we learn the node embeddings by jointly training the objective function including the objectives of classification task and extended structural balance theory, which can be defined as:\nwhere λ denotes the weight of extended structural balance theory objective to balance between classification task and extended structural balance theory, and L regularizer denotes the variable regularizer of our proposed framework. When training the neural network, we use Xavier initialization (Glorot and Bengio 2010) to generate values for its parameter matrices, and apply a variant of stochastic gradient descent -AdaGrad (Duchi, Hazan, and Singer 2011) to train the neural network with a mini-batch setting.",
+      "title": "Objective Function and Training"
+    },
+    {
+      "content": "In this section, we present experiments to evaluate the effectiveness of the proposed framework SNEA. We begin by introducing experimental settings. Then we will measure the quality of the embedding learned by SNEA on signed link prediction task with comparisons with state-of-the-art baseline methods. Finally, we present the parameter sensitivity analysis of SNEA.",
+      "title": "Experiments"
+    },
+    {
+      "content": "We conduct experiments on four real-world signed networks to evaluate the effectiveness the proposed framework: Bitcoin-Alpha 1 , Bitcoin-OTC 2 , Epinions 3 and Slashdot 4 . Bitcoin-Alpha and Bircoin-OTC are trading platforms settled in Bitcoins. Since users of the trading platforms are anonymous, users can label other users as trust (positive) or distrust (negative) user to maintain a trading record to prevent transactions from risky users. Epinions is a general consumer review site where users can create positive (or negative) links, if they trust (or distrust) each other. And Slashdot is a technology news site in which users can create positive (or negative) links. Some additional preprocessing was performed on these lager network datasets (Epinions and Slashdot) by filtering out users (nodes) with only a few links. Some key statistics of the network datasets are summarized in Table 1. We compare the proposed framework with the following state-of-the-art baseline methods:\n• TSVD (Eckart and Young 1936): It is a singular value decomposition method in the form of A = UΣV T , where Σ ∈ R d×d is the diagonal matrix of singular values in descending order, and U, V ∈ R N ×d are the orthonormal matrices corresponding to the selected singular values. We utilize U as the node embeddings for TSVD.\n• SiNE 5 (Wang et al. 2017): It adopts a deep learning framework guided by the structural balance theory to obtain the node embeddings.\n• SIDE 6 (Kim et al. 2018): it optimizes the likelihood over both direct and indirect signed connections to encode structural information into node embeddings learning.\n• SGCN 7 (Derr, Ma, and Tang 2018): It utilizes balance theory to aggregate and propagate information through graph convolutional layers to generate the node embeddings.\n• SiGAT 8 (Huang et al. 2019): it introduces the GAT (Veličković et al. 2018) to signed networks and designs a motif-based graph neural model to learn the node embeddings.\nFor a fair comparison, we set the final embedding dimension as 64 for all the methods. For SiNE, SIDE, SGCN and SiGAT, we use the suggested hyperparameters and settings in their papers. For SNEA, we set λ as 4. Since there is no node features for all the signed network datasets used in our paper, we use final node embeddings (i.e., U) of TSVD as the initial embeddings of SNEA model.",
+      "title": "Datasets and Baselines"
+    },
+    {
+      "content": "In this subsection, we measure the quality of node embeddings learned by SNEA on the most fundamental signed network analysis task -signed link prediction. For signed link prediction task, we randomly select 80% links as training set to learn the node embeddings and utilize the remaining links as test set to evaluate the performance. We derive a link feature by combining two embeddings of the connected nodes. As signed link prediction is regarded as binary classification task, therefore we employ a logistic regression classifier to classify positive and negative links, and the performance will be evaluated with Area Under Curve (AUC) and F1score metrics. We repeat the process 5 times and report the average performance as shown in Table 2 and Table 3.  We denote SNEA-1 as a variant of SNEA that only makes use of the first attentional layer to aggregate informations. We can see that SNEA achieves an apparent performance improvement over SNEA-1 on all the network datasets, which demonstrates the necessity and effectiveness of using balance theory when aggregating and propagating information in signed networks. In comparision with other baseline methods, SNEA outperforms all of them in terms of AUC and F1. Although we use the final node embeddings U of TSVD as the initial embeddings of SNEA, SNEA achieves a significant improvement over TSVD, which demonstrates the ability of learning node embeddings using SNEA.",
+      "title": "Signed Link Prediction"
+    },
+    {
+      "content": "SNEA has two major parameters -λ and the learning rate for AdaGrad. As is used for the optimization process, therefore we do not consider , and only investigate the impact of parameter λ in this subsection. Due to space limit, we only show the parameter analysis results of Bitcoin-Alpha, as we have similar observations on other datasets. We vary λ from {0, 1, 2, 3, 4, 5, 6} and show the performance variations of λ in Figure 3. We can see that when λ > 1, the performance in terms of AUC varies in a narrow range, and the performance in terms of F1 presents a increase trend with the increase of λ. To make a balance between the AUC and F1 performance, we set λ = 4 in our paper. Furthermore, when λ = 0, we have a drastic decrease in performance, which demonstrates the necessity of incorporating the extended structural balance theory into signed network embedding.",
+      "title": "Parameter Study"
+    },
+    {
+      "content": "In this paper, we propose a novel signed network embedding framework -SNEA, which utilizes a neural network architecture to learn node embeddings with graph attention machanism. First, we propose a graph attentional layer, which utilizes a masked self-attention mechanism to compute different importance coefficients for different nodes in a neighborhood for aggregation process. Then, we utilize the graph attentional layer and balance theory to learn more discriminative embeddings. Finally, we design a objective function as the objective for optimizing the proposed framework. Extensive experimental results on several real-world signed network datasets demonstrate the effectiveness of the proposed framework through the signed link prediction task. One future direction is to generalize this framework to heterogenous networks.",
+      "title": "Conclusion"
+    },
+    {
+      "content": "",
+      "title": "Figure 1 :"
+    },
+    {
+      "content": "",
+      "title": "Figure 2 :"
+    },
+    {
+      "content": "",
+      "title": "Figure 3 :"
+    },
+    {
+      "content": "",
+      "title": "Table 1 :"
+    },
+    {
+      "content": "",
+      "title": "Table 2 :"
+    },
+    {
+      "content": "",
+      "title": "Table 3 :"
+    }
+  ],
+  "figures": [
+    {
+      "caption": "the length of path between pair of nodes. Four types of triangles in a signed network.",
+      "content": "Figure 1 :\n1the length of path between pair of nodes. Four types of triangles in a signed network.",
+      "id": ""
+    },
+    {
+      "caption": "An illustration of the attention mechanism and how SNEA aggregates information from neighboring nodes. (a): The attention mechanism tanh(b(h i W h j W) T ), parameterized by shared weight vector b, applying a tanh activation. (b): a demo subnetwork for aggregation process. (c) -(d): aggregation processes for the first layer. (e) -(f): aggregation processes for deeper layers (i.e., l > 1).",
+      "content": "Figure 2 :\n2An illustration of the attention mechanism and how SNEA aggregates information from neighboring nodes. (a): The attention mechanism tanh(b(h i W h j W) T ), parameterized by shared weight vector b, applying a tanh activation. (b): a demo subnetwork for aggregation process. (c) -(d): aggregation processes for the first layer. (e) -(f): aggregation processes for deeper layers (i.e., l > 1).",
+      "id": ""
+    },
+    {
+      "caption": "denotes the dimension of the output embedding. Taking Figure 2(b) as an example, the aggregation processes for balanced embedding h B(1) i and unbalanced embedding h U (1) i are shown in Figure 2(c) and 2(d).In the first aggregation layer, the importance of v j to v i for balanced embedding h",
+      "content": "denotes the dimension of the output embedding. Taking Figure 2(b) as an example, the aggregation processes for balanced embedding h B(1) i and unbalanced embedding h U (1) i are shown in Figure 2(c) and 2(d).In the first aggregation layer, the importance of v j to v i for balanced embedding h",
+      "id": ""
+    },
+    {
+      "caption": "to the definitions of B i (l) and U i (l). When we generate balanced embedding h B(l) i",
+      "content": "to the definitions of B i (l) and U i (l). When we generate balanced embedding h B(l) i",
+      "id": ""
+    },
+    {
+      "caption": "can obtain the final node embedding for v i as:",
+      "content": "can obtain the final node embedding for v i as:",
+      "id": ""
+    },
+    {
+      "caption": "Signed network G = (V, E); initial embedding {h 0 i , ∀v i ∈ V}; number of aggregation layers L; weight matrices W M , W B(l) and W U (l) ; attentional parameter vectors b B(l) and b U (l) ; l ∈ {1, ..., L}; Output: Node embedding h i , ∀v i ∈ V; 1: for v i 16: end if 17: Update h i using Eq. (18);",
+      "content": "Signed network G = (V, E); initial embedding {h 0 i , ∀v i ∈ V}; number of aggregation layers L; weight matrices W M , W B(l) and W U (l) ; attentional parameter vectors b B(l) and b U (l) ; l ∈ {1, ..., L}; Output: Node embedding h i , ∀v i ∈ V; 1: for v i 16: end if 17: Update h i using Eq. (18);",
+      "id": ""
+    },
+    {
+      "caption": "Parameter sensitivity of SNEA w.r.t. λ.",
+      "content": "Figure 3 :\n3Parameter sensitivity of SNEA w.r.t. λ.",
+      "id": ""
+    },
+    {
+      "caption": "The statistics of datasets.",
+      "content": "Table 1 :\n1The statistics of datasets.Datasets Bit.Alpha Bit.OTC Slashdot Epinions \n\n|V| \n3775 \n5875 \n37626 \n45003 \n|E + | \n12721 \n18230 \n313543 \n513851 \n|E − | \n1399 \n3259 \n105529 \n102180",
+      "id": ""
+    },
+    {
+      "caption": "Signed link prediction results with AUC. Methods Bit.Alpha Bit.OTC Slashdot Epinions",
+      "content": "Table 2 :\n2Signed link prediction results with AUC. Methods Bit.Alpha Bit.OTC Slashdot EpinionsTSVD \n0.740 \n0.761 \n0.740 \n0.766 \nSiNE \n0.781 \n0.782 \n0.785 \n0.831 \nSIDE \n0.642 \n0.632 \n0.554 \n0.617 \nSGCN \n0.801 \n0.804 \n0.786 \n0.849 \nSiGAT \n0.775 \n0.796 \n0.789 \n0.853 \nSNEA-1 \n0.766 \n0.784 \n0.726 \n0.822 \nSNEA \n0.816 \n0.818 \n0.799 \n0.861",
+      "id": ""
+    },
+    {
+      "caption": "Signed link prediction results with F1. Methods Bit.Alpha Bit.OTC Slashdot Epinions",
+      "content": "Table 3 :\n3Signed link prediction results with F1. Methods Bit.Alpha Bit.OTC Slashdot EpinionsTSVD \n0.863 \n0.870 \n0.804 \n0.843 \nSiNE \n0.895 \n0.876 \n0.850 \n0.902 \nSIDE \n0.753 \n0.728 \n0.624 \n0.725 \nSGCN \n0.915 \n0.908 \n0.859 \n0.920 \nSiGAT \n0.894 \n0.903 \n0.857 \n0.917 \nSNEA-1 \n0.884 \n0.886 \n0.801 \n0.897 \nSNEA \n0.927 \n0.924 \n0.868 \n0.933",
+      "id": ""
+    }
+  ],
+  "references": [
+    {
+      "doi": "",
+      "text": "Watch your step: Learning node embeddings via graph attention. S Abu-El-Haija, B Perozzi, R Al-Rfou, A A Alemi, Proceedings of NIPS. NIPSAbu-El-Haija, S.; Perozzi, B.; Al-Rfou, R.; and Alemi, A. A. 2018. Watch your step: Learning node embeddings via graph attention. In Proceedings of NIPS, 9180-9190."
+    },
+    {
+      "doi": "",
+      "text": "MixHop: Higher-order graph convolutional architectures via sparsified neighborhood mixing. S Abu-El-Haija, B Perozzi, A Kapoor, N Alipourfard, K Lerman, H Harutyunyan, G V Steeg, A Galstyan, Proceedings of ICML. ICMLAbu-El-Haija, S.; Perozzi, B.; Kapoor, A.; Alipourfard, N.; Lerman, K.; Harutyunyan, H.; Steeg, G. V.; and Galstyan, A. 2019. MixHop: Higher-order graph convolutional architec- tures via sparsified neighborhood mixing. In Proceedings of ICML, 21-29."
+    },
+    {
+      "doi": "",
+      "text": "Structural balance: a generalization of heider's theory. D Cartwright, F Harary, Psychological review. 635277Cartwright, D., and Harary, F. 1956. Structural balance: a generalization of heider's theory. Psychological review 63(5):277."
+    },
+    {
+      "doi": "",
+      "text": "FastGCN: Fast learning with graph convolutional networks via importance sampling. J Chen, T Ma, C Xiao, ICLR. Chen, J.; Ma, T.; and Xiao, C. 2018. FastGCN: Fast learning with graph convolutional networks via importance sampling. In ICLR."
+    },
+    {
+      "doi": "",
+      "text": "Scalable clustering of signed networks using balance normalized cut. K.-Y Chiang, J J Whang, I S Dhillon, Proceedings of CIKM. CIKMChiang, K.-Y.; Whang, J. J.; and Dhillon, I. S. 2012. Scal- able clustering of signed networks using balance normalized cut. In Proceedings of CIKM, 615-624."
+    },
+    {
+      "doi": "",
+      "text": "Signed graph convolutional networks. T Derr, Y Ma, J Tang, Proceedings of ICDM. ICDMDerr, T.; Ma, Y.; and Tang, J. 2018. Signed graph convolu- tional networks. In Proceedings of ICDM, 929-934."
+    },
+    {
+      "doi": "",
+      "text": "Adaptive subgradient methods for online learning and stochastic optimization. J Duchi, E Hazan, Y Singer, Journal of Machine Learning Research. 12Duchi, J.; Hazan, E.; and Singer, Y. 2011. Adaptive subgra- dient methods for online learning and stochastic optimiza- tion. Journal of Machine Learning Research 12(Jul):2121- 2159."
+    },
+    {
+      "doi": "",
+      "text": "The approximation of one matrix by another of lower rank. C Eckart, Young , G , Psychometrika. 13Eckart, C., and Young, G. 1936. The approximation of one matrix by another of lower rank. Psychometrika 1(3):211- 218."
+    },
+    {
+      "doi": "",
+      "text": "Understanding the difficulty of training deep feedforward neural networks. X Glorot, Y Bengio, Proceedings of AISTATS. AISTATSGlorot, X., and Bengio, Y. 2010. Understanding the diffi- culty of training deep feedforward neural networks. In Pro- ceedings of AISTATS, 249-256."
+    },
+    {
+      "doi": "",
+      "text": "Attitudes and cognitive organization. F Heider, The Journal of psychology. 211Heider, F. 1946. Attitudes and cognitive organization. The Journal of psychology 21(1):107-112."
+    },
+    {
+      "doi": "",
+      "text": "Low rank modeling of signed networks. C.-J Hsieh, K.-Y Chiang, I S Dhillon, Proceedings of KDD. KDDHsieh, C.-J.; Chiang, K.-Y.; and Dhillon, I. S. 2012. Low rank modeling of signed networks. In Proceedings of KDD, 507-515."
+    },
+    {
+      "doi": "",
+      "text": "Signed graph attention networks. J Huang, H Shen, L Hou, X Cheng, Proceedings of ICANN. ICANNHuang, J.; Shen, H.; Hou, L.; and Cheng, X. 2019. Signed graph attention networks. In Proceedings of ICANN."
+    },
+    {
+      "doi": "",
+      "text": "Side: representation learning in signed directed networks. J Kim, H Park, J.-E Lee, U Kang, Proceedings of WWW. WWWKim, J.; Park, H.; Lee, J.-E.; and Kang, U. 2018. Side: representation learning in signed directed networks. In Pro- ceedings of WWW, 509-518."
+    },
+    {
+      "doi": "",
+      "text": "Semi-supervised classification with graph convolutional networks. T N Kipf, M Welling, ICLR. Kipf, T. N., and Welling, M. 2017. Semi-supervised classi- fication with graph convolutional networks. In ICLR."
+    },
+    {
+      "doi": "",
+      "text": "Spectral analysis of signed graphs for clustering, prediction and visualization. J Kunegis, S Schmidt, A Lommatzsch, J Lerner, E W De Luca, S Albayrak, Proceedings of SDM. SDMKunegis, J.; Schmidt, S.; Lommatzsch, A.; Lerner, J.; De Luca, E. W.; and Albayrak, S. 2010. Spectral analysis of signed graphs for clustering, prediction and visualization. In Proceedings of SDM, 559-570."
+    },
+    {
+      "doi": "",
+      "text": "What is the added value of negative links in online social networks. J Kunegis, J Preusse, F Schwagereit, Proceedings of WWW. WWWKunegis, J.; Preusse, J.; and Schwagereit, F. 2013. What is the added value of negative links in online social networks?. In Proceedings of WWW, 727-736."
+    },
+    {
+      "doi": "",
+      "text": "High-order proximity preserving information network hashing. D Lian, K Zheng, V W Zheng, Y Ge, L Cao, I W Tsang, X Xie, Proceedings of KDD. KDDLian, D.; Zheng, K.; Zheng, V. W.; Ge, Y.; Cao, L.; Tsang, I. W.; and Xie, X. 2018. High-order proximity preserv- ing information network hashing. In Proceedings of KDD, 1744-1753."
+    },
+    {
+      "doi": "",
+      "text": "Distributed representations of words and phrases and their compositionality. T Mikolov, I Sutskever, K Chen, G S Corrado, J Dean, Proceedings of NIPS. NIPSMikolov, T.; Sutskever, I.; Chen, K.; Corrado, G. S.; and Dean, J. 2013. Distributed representations of words and phrases and their compositionality. In Proceedings of NIPS, 3111-3119."
+    },
+    {
+      "doi": "",
+      "text": "Extended structural balance theory for modeling trust in social networks. Y Qian, Adali , S , Proceedings of PST. PSTQian, Y., and Adali, S. 2013. Extended structural balance theory for modeling trust in social networks. In Proceedings of PST, 283-290."
+    },
+    {
+      "doi": "",
+      "text": "Foundations of trust and distrust in networks: Extended structural balance theory. Y Qian, Adali , S , ACM Transactions on the Web. 8313Qian, Y., and Adali, S. 2014. Foundations of trust and dis- trust in networks: Extended structural balance theory. ACM Transactions on the Web 8(3):13."
+    },
+    {
+      "doi": "",
+      "text": "Network embedding as matrix factorization: Unifying deepwalk, line, pte, and node2vec. J Qiu, Y Dong, H Ma, J Li, K Wang, J Tang, Proceedings of WSDM. WSDMQiu, J.; Dong, Y.; Ma, H.; Li, J.; Wang, K.; and Tang, J. 2018. Network embedding as matrix factorization: Unify- ing deepwalk, line, pte, and node2vec. In Proceedings of WSDM, 459-467."
+    },
+    {
+      "doi": "",
+      "text": "Community detection and link prediction via clusterdriven low-rank matrix completion. J Shao, Z Zhang, Z Yu, J Wang, Y Zhao, Yang , Q , Proceedings of IJ-CAI. IJ-CAIShao, J.; Zhang, Z.; Yu, Z.; Wang, J.; Zhao, Y.; and Yang, Q. 2019. Community detection and link prediction via cluster- driven low-rank matrix completion. In Proceedings of IJ- CAI, 3382-3388."
+    },
+    {
+      "doi": "",
+      "text": "Node classification in signed social networks. J Tang, C Aggarwal, H Liu, Proceedings of SDM. SDMTang, J.; Aggarwal, C.; and Liu, H. 2016. Node classifi- cation in signed social networks. In Proceedings of SDM, 54-62."
+    },
+    {
+      "doi": "",
+      "text": "Learning deep representations for graph clustering. F Tian, B Gao, Q Cui, E Chen, T.-Y Liu, Proceedings of AAAI. AAAITian, F.; Gao, B.; Cui, Q.; Chen, E.; and Liu, T.-Y. 2014. Learning deep representations for graph clustering. In Pro- ceedings of AAAI."
+    },
+    {
+      "doi": "",
+      "text": "Attention is all you need. A Vaswani, N Shazeer, N Parmar, J Uszkoreit, L Jones, A N Gomez, Ł Kaiser, I Polosukhin, Proceedings of NIPS. NIPSVaswani, A.; Shazeer, N.; Parmar, N.; Uszkoreit, J.; Jones, L.; Gomez, A. N.; Kaiser, Ł.; and Polosukhin, I. 2017. At- tention is all you need. In Proceedings of NIPS, 5998-6008."
+    },
+    {
+      "doi": "",
+      "text": "Graph attention networks. P Veličković, G Cucurull, A Casanova, A Romero, P Liò, Y Bengio, ICLR. Veličković, P.; Cucurull, G.; Casanova, A.; Romero, A.; Liò, P.; and Bengio, Y. 2018. Graph attention networks. In ICLR."
+    },
+    {
+      "doi": "",
+      "text": "Signed network embedding in social media. S Wang, J Tang, C Aggarwal, Y Chang, H Liu, Proceedings of SDM. SDMWang, S.; Tang, J.; Aggarwal, C.; Chang, Y.; and Liu, H. 2017. Signed network embedding in social media. In Pro- ceedings of SDM, 327-335."
+    },
+    {
+      "doi": "",
+      "text": "Heterogeneous graph attention network. X Wang, H Ji, C Shi, B Wang, Y Ye, P Cui, P S Yu, Proceedings of WWW. WWWWang, X.; Ji, H.; Shi, C.; Wang, B.; Ye, Y.; Cui, P.; and Yu, P. S. 2019. Heterogeneous graph attention network. In Proceedings of WWW, 2022-2032."
+    },
+    {
+      "doi": "",
+      "text": "Structural deep network embedding. D Wang, P Cui, W Zhu, Proceedings of KDD. KDDWang, D.; Cui, P.; and Zhu, W. 2016. Structural deep net- work embedding. In Proceedings of KDD, 1225-1234."
+    },
+    {
+      "doi": "",
+      "text": "Fast network embedding enhancement via high order proximity approximation. C Yang, M Sun, Z Liu, C Tu, Proceedings of IJCAI. IJCAIYang, C.; Sun, M.; Liu, Z.; and Tu, C. 2017. Fast network embedding enhancement via high order proximity approxi- mation. In Proceedings of IJCAI, 19-25."
+    },
+    {
+      "doi": "",
+      "text": "Masked graph convolutional network. L Yang, F Wu, Y Wang, J Gu, Y Guo, Proceedings of IJ-CAI. IJ-CAIYang, L.; Wu, F.; Wang, Y.; Gu, J.; and Guo, Y. 2019. Masked graph convolutional network. In Proceedings of IJ- CAI, 4070-4077."
+    },
+    {
+      "doi": "",
+      "text": "Sne: signed network embedding. S Yuan, X Wu, Y Xiang, Proceedings of PAKDD. PAKDDYuan, S.; Wu, X.; and Xiang, Y. 2017. Sne: signed network embedding. In Proceedings of PAKDD, 183-195."
+    },
+    {
+      "doi": "",
+      "text": "Link prediction based on graph neural networks. M Zhang, Chen , Y , Proceedings of NIPS. NIPSZhang, M., and Chen, Y. 2018. Link prediction based on graph neural networks. In Proceedings of NIPS, 5165-5175."
+    },
+    {
+      "doi": "",
+      "text": "Arbitrary-order proximity preserved network embedding. Z Zhang, P Cui, X Wang, J Pei, X Yao, W Zhu, Proceedings of KDD. KDDZhang, Z.; Cui, P.; Wang, X.; Pei, J.; Yao, X.; and Zhu, W. 2018. Arbitrary-order proximity preserved network embed- ding. In Proceedings of KDD, 2778-2786."
+    },
+    {
+      "doi": "",
+      "text": "Link prediction via ranking metric duallevel attention network learning. Z Zhao, B Gao, V W Zheng, D Cai, X He, Y Zhuang, Proceedings of IJCAI. IJCAIZhao, Z.; Gao, B.; Zheng, V. W.; Cai, D.; He, X.; and Zhuang, Y. 2017. Link prediction via ranking metric dual- level attention network learning. In Proceedings of IJCAI, 3525-3531."
+    },
+    {
+      "doi": "",
+      "text": "Spectral embedding of signed networks. Q Zheng, D B Skillicorn, Proceedings of SDM. SDMZheng, Q., and Skillicorn, D. B. 2015. Spectral embedding of signed networks. In Proceedings of SDM, 55-63."
+    }
+  ],
+  "parsed_external_ids": {
+    "acl": null,
+    "arxiv": null,
+    "dblp": "conf/aaai/LiTZC20",
+    "doi": "10.1609/aaai.v34i04.5911",
+    "mag": 2997638284.0,
+    "pubmed": null,
+    "pubmedcentral": null
+  },
+  "source": {
+    "open_access": {
+      "license": null,
+      "status": "GOLD",
+      "url": "https://ojs.aaai.org/index.php/AAAI/article/download/5911/5767"
+    },
+    "pdf_sha": "99513b8a1c9a901d8f74b610ebdaafd1f5ac0fca",
+    "pdf_urls": []
+  },
+  "pdf_urls": [],
+  "pdf_sha": "99513b8a1c9a901d8f74b610ebdaafd1f5ac0fca",
+  "open_access": {
+    "license": null,
+    "status": "GOLD",
+    "url": "https://ojs.aaai.org/index.php/AAAI/article/download/5911/5767"
+  },
+  "license": null,
+  "open_access_url": "https://ojs.aaai.org/index.php/AAAI/article/download/5911/5767",
+  "open_access_status": "GOLD",
+  "metadata_title": "Learning Signed Network Embedding via Graph Attention",
+  "metadata_authors": [
+    {
+      "authorId": 2143858905.0,
+      "name": "Yu Li"
+    },
+    {
+      "authorId": 2152948229.0,
+      "name": "Yuan Tian"
+    },
+    {
+      "authorId": 1718428.0,
+      "name": "Jiawei Zhang"
+    },
+    {
+      "authorId": 2118858577.0,
+      "name": "Yi Chang"
+    }
+  ],
+  "publicationdate": "2020-04-03",
+  "influentialcitationcount": 22,
+  "citationcount": 124,
+  "year": 2020,
+  "publicationvenueid": "bdc2e585-4e48-4e36-8af1-6d859763d405",
+  "publicationtypes": [
+    "JournalArticle",
+    "Conference"
+  ],
+  "metadata_externalids": {
+    "ACL": null,
+    "ArXiv": null,
+    "CorpusId": 213253488,
+    "DBLP": "conf/aaai/LiTZC20",
+    "DOI": "10.1609/AAAI.V34I04.5911",
+    "MAG": 2997638284.0,
+    "PubMed": null,
+    "PubMedCentral": null
+  },
+  "PubMedCentral": null,
+  "PubMed": null,
+  "MAG": 2997638284.0,
+  "DOI": "10.1609/AAAI.V34I04.5911",
+  "CorpusId": 213253488,
+  "ArxIv": null,
+  "DBLP": "conf/aaai/LiTZC20",
+  "ACL": null,
+  "referencecount": 36,
+  "venue": "AAAI Conference on Artificial Intelligence",
+  "journal": {
+    "name": null,
+    "pages": "4772-4779",
+    "volume": null
+  },
+  "volume": null,
+  "pages": "4772-4779",
+  "name": null,
+  "isopenaccess": true,
+  "url": "https://www.semanticscholar.org/paper/8eaff1bf5d460a94a3e2ea890ee3d421b551fe76",
+  "fieldofstudy_source": "s2-fos-model",
+  "fieldofstudy_category": "Computer Science",
+  "rn": 1,
+  "explicit_gpu_hours": "None specified",
+  "estimated_gpu_hours": "None specified",
+  "number_gpu": "None specified",
+  "gpu_type": "None specified",
+  "training_details": "None specified",
+  "reasoning": "None specified",
+  "summary": "This paper presents the Signed Network Embedding framework (SNEA), which utilizes a graph attention mechanism to learn low-dimensional representations of signed networks. The authors highlight the importance of distinguishing between positive and negative links in network embedding as existing methods mostly focus on unsigned networks. SNEA incorporates a masked self-attentional layer to estimate the importance coefficients of pairs of nodes during the embedding aggregation process. The framework demonstrates improved performance in signed link prediction tasks through experiments on several real-world signed networks, indicating that the inclusion of balance theory and attention mechanisms enhances the quality of embeddings.",
+  "classification": "Methods Paper",
+  "methods": "[\"Graph Attention\", \"Masked Self-Attention\"]",
+  "results": "[\"SNEA outperforms state-of-the-art methods in signed link prediction tasks on real-world datasets.\"]",
+  "models": "[\"SNEA\"]",
+  "datasets": "[\"Bitcoin-Alpha\", \"Bitcoin-OTC\", \"Epinions\", \"Slashdot\"]",
+  "metrics": "[\"AUC\", \"F1-score\"]",
+  "limitations": "[]",
+  "train_row_index": 788230,
+  "stratum": "high_gt100"
+}
