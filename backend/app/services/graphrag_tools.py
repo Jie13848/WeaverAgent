@@ -13,6 +13,7 @@ GraphRAG 检索工具服务
 """
 
 import os
+import re
 import asyncio
 import json
 import time
@@ -348,20 +349,123 @@ def _load_graph_data(graph_id: str) -> Dict[str, Optional[pd.DataFrame]]:
 _PAPER_SOURCE_CACHE: Dict[str, Dict[str, List[str]]] = {}
 
 
+def _title_from_filename(fallback: str) -> Optional[str]:
+    """从 GraphRAG 文档文件名解析论文标题（常见于 PDF 入库）"""
+    if not fallback:
+        return None
+    name = fallback
+    # doc_<hash>_Author_-_2023_-_Title_Words_pdf.txt
+    if name.startswith("doc_"):
+        parts = name.split("_", 2)
+        if len(parts) >= 3:
+            name = parts[2]
+    m = re.search(
+        r"(?:.+?_-_\d{4}_-_)(.+?)(?:_?(?:pdf|md|txt)(?:\.txt)?)?$",
+        name,
+        re.IGNORECASE,
+    )
+    if m:
+        title = m.group(1).replace("_", " ").strip(" .")
+        title = re.sub(r"\s+", " ", title)
+        if len(title) > 4:
+            return title
+    return None
+
+
+def _title_from_pdf_text(doc_text: str) -> Optional[str]:
+    """从 PDF 纯文本（无 Markdown 标题）提取论文标题"""
+    lines = [ln.strip() for ln in str(doc_text)[:4000].split("\n")]
+    skip = re.compile(
+        r"^(?:\d{1,4}|IEEE|VOL\.|DOI|http|©|Manuscript|Received|Accepted|Abstract|\s*$)",
+        re.IGNORECASE,
+    )
+    author = re.compile(
+        r"Member,\s*IEEE|Senior Member|Graduate Student|@|\bet al\.|University|College|Department|School of",
+        re.IGNORECASE,
+    )
+    person_name = re.compile(
+        r"^[A-Z][a-zA-Z\-']+(?:\s+[A-Z][a-zA-Z\-']+){1,3}$"
+    )
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if skip.match(line) or "TRANSACTIONS ON" in line.upper():
+            i += 1
+            continue
+        parts: List[str] = []
+        while i < len(lines):
+            line = lines[i].strip()
+            if not line:
+                if parts:
+                    break
+                i += 1
+                continue
+            if skip.match(line):
+                i += 1
+                continue
+            if "TRANSACTIONS ON" in line.upper():
+                i += 1
+                continue
+            if author.search(line):
+                break
+            # 下一行若是作者行（如 ", Member, IEEE"），则当前行是标题末行
+            next_nonempty = next((lines[j].strip() for j in range(i + 1, min(i + 3, len(lines))) if lines[j].strip()), "")
+            if parts and person_name.match(line) and re.match(r"^,?\s*Member,\s*IEEE", next_nonempty, re.I):
+                break
+            parts.append(line)
+            i += 1
+            if len(parts) >= 5:
+                break
+        if parts:
+            title = re.sub(r"\s+", " ", " ".join(parts)).strip(":：")
+            if 10 <= len(title) <= 250:
+                return title
+        if not parts:
+            i += 1
+    return None
+
+
 def _extract_paper_title(doc_text: str, fallback: str) -> str:
-    """从 Markdown 文档文本提取真实论文标题（第一个 `# ` 标题）"""
-    if not doc_text:
-        return fallback
+    """从文档文本 / 文件名提取真实论文标题"""
+    if not doc_text and not fallback:
+        return fallback or "Unknown"
+
+    # 1. Markdown H1
     for line in str(doc_text)[:2000].split("\n"):
         line = line.strip()
         if line.startswith("# ") and len(line) < 250:
-            title = line.lstrip("# ").strip()
-            # 规范化：多空格合并、去末尾冒号等
-            import re as _re
-            title = _re.sub(r'\s+', ' ', title).strip(':：')
+            title = re.sub(r"\s+", " ", line.lstrip("# ").strip()).strip(":：")
             if len(title) > 4:
                 return title
+
+    # 2. 文件名解析（PDF 入库时通常含完整标题，比纯文本启发式更可靠）
+    fn_title = _title_from_filename(fallback)
+    if fn_title:
+        return fn_title
+
+    # 3. PDF 纯文本标题块
+    pdf_title = _title_from_pdf_text(doc_text)
+    if pdf_title:
+        return pdf_title
+
     return fallback
+
+
+def list_document_titles(graph_id: str) -> List[str]:
+    """列出图谱中所有文档的可读标题（去重）"""
+    data = _load_graph_data(graph_id)
+    docs_df = data.get("documents")
+    if docs_df is None or docs_df.empty:
+        return []
+    titles: List[str] = []
+    seen = set()
+    for _, r in docs_df.iterrows():
+        fallback = str(r.get("title", "") or "")
+        title = _extract_paper_title(r.get("text", ""), fallback)
+        if title and title not in seen:
+            seen.add(title)
+            titles.append(title)
+    return titles
 
 
 def _build_paper_source_map(graph_id: str) -> Dict[str, List[str]]:

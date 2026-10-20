@@ -370,14 +370,30 @@ def chat_with_report_agent():
 
         analysis_requirement = project.analysis_requirement or ""
 
+        from ..services.graphrag_tools import list_document_titles
+        source_documents = [
+            f.get("filename", "")
+            for f in (project.files or [])
+            if f.get("filename")
+        ]
+        graph_document_titles = list_document_titles(graph_id)
+
         # 创建Agent并进行对话
+        # simulation_id 必须是 project_id（报告 meta 里存的 simulation_id），
+        # 不能传 report_id，否则 chat() 内 get_report_by_simulation 会找不到已生成报告。
         agent = ReportAgent(
             graph_id=graph_id,
-            simulation_id=report_id,
+            simulation_id=report.simulation_id,
             simulation_requirement=analysis_requirement
         )
 
-        result = agent.chat(message=message, chat_history=chat_history)
+        result = agent.chat(
+            message=message,
+            chat_history=chat_history,
+            report_content=report.markdown_content,
+            source_documents=source_documents,
+            graph_document_titles=graph_document_titles,
+        )
 
         return jsonify({
             "success": True,

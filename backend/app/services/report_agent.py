@@ -833,12 +833,18 @@ CHAT_SYSTEM_PROMPT_TEMPLATE = """\
 【背景】
 分析主题: {simulation_requirement}
 
+【本图谱关联的文献（作来源标注用）】
+{graph_document_titles}
+
+【用户上传的原始文件】
+{source_documents}
+
 【已生成的知识图谱分析报告】
 {report_content}
 
 【回答规则】
-1. **先看报告**：若上面的报告已经能回答问题，直接基于报告作答，不要调用工具。
-2. **报告不足时必须调用工具**：当用户问的概念/术语在报告里没有，或需要更多文献支撑时，**必须**先调用工具检索，**严禁**未调用工具就直接说"未检索到/暂无数据"。
+1. **先看报告**：若报告已能回答问题，可基于报告作答；但**每条参考条目仍必须标注具体文献来源**（见下方来源规则），不得写「未标注」敷衍。
+2. **需要引用原文或报告未覆盖的内容时**：**必须**调用 `quick_search` 等工具检索，以便获得带 `【来源: ...】` 的事实。
 3. 回答要简洁、有条理，用 > 格式引用关键文献。
 
 【工具选择策略】（按优先级）
@@ -899,8 +905,9 @@ CHAT_SYSTEM_PROMPT_TEMPLATE = """\
 > "TURBOQUANT → RABITQ: Consistently outperforms RabitQ in recall ratio 【来源: TurboQuant: Online Vector Quantization...】"
 
 你**必须**把这个来源信息完整搬到最终答复的 *（来源：...）* 里。
-- 如果一条引用**没有**对应的 `【来源: XXX】` 标签，写 *（来源：图谱社区摘要 / 未标注）*
-- 不要自己编造论文标题 —— 只用工具真实返回的来源
+- 若无 `【来源: XXX】`，按优先级选用：**(a)** 上方「本图谱关联的文献」中最匹配的一篇全标题；**(b)** 「用户上传的原始文件」中的文件名
+- **禁止**默认写「图谱社区摘要 / 未标注」——仅当确实无法对应任何一篇已上传/已索引文献时，才写 *（来源：未标注）*
+- 不要编造不存在的论文标题 —— 只用工具返回或上方文献列表中已有的名称
 
 【回答风格】
 - 参考条目要具体到**实体名**，不要泛泛写"相关文献"
@@ -1880,7 +1887,10 @@ class ReportAgent:
     def chat(
         self, 
         message: str,
-        chat_history: List[Dict[str, str]] = None
+        chat_history: List[Dict[str, str]] = None,
+        report_content: Optional[str] = None,
+        source_documents: Optional[List[str]] = None,
+        graph_document_titles: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """
         与Report Agent对话
@@ -1902,20 +1912,33 @@ class ReportAgent:
         
         chat_history = chat_history or []
         
-        # 获取已生成的报告内容
-        report_content = ""
-        try:
-            report = ReportManager.get_report_by_simulation(self.simulation_id)
-            if report and report.markdown_content:
-                # 限制报告长度，避免上下文过长
-                report_content = report.markdown_content[:15000]
-                if len(report.markdown_content) > 15000:
-                    report_content += "\n\n... [报告内容已截断] ..."
-        except Exception as e:
-            logger.warning(f"获取报告内容失败: {e}")
+        # 获取已生成的报告内容（优先使用调用方传入的 report_content）
+        if not report_content:
+            try:
+                report = ReportManager.get_report_by_simulation(self.simulation_id)
+                if report and report.markdown_content:
+                    report_content = report.markdown_content
+            except Exception as e:
+                logger.warning(f"获取报告内容失败: {e}")
+                report_content = ""
+
+        if report_content:
+            # 限制报告长度，避免上下文过长
+            if len(report_content) > 15000:
+                report_content = report_content[:15000] + "\n\n... [报告内容已截断] ..."
+        else:
+            report_content = "（暂无报告）"
         
+        doc_titles = graph_document_titles or []
+        uploaded = source_documents or []
         system_prompt = CHAT_SYSTEM_PROMPT_TEMPLATE.format(
             simulation_requirement=self.simulation_requirement,
+            graph_document_titles=(
+                "\n".join(f"- {t}" for t in doc_titles) if doc_titles else "（暂无）"
+            ),
+            source_documents=(
+                "\n".join(f"- {f}" for f in uploaded) if uploaded else "（暂无）"
+            ),
             report_content=report_content if report_content else "（暂无报告）",
             tools_description=self._get_tools_description(),
         )
